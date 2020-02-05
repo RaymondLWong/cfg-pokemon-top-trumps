@@ -16,7 +16,7 @@ class Sprite:
         self.ascii_art = ascii_art
 
     def __repr__(self):
-        return self.ascii_art
+        return '\n' + self.ascii_art + '\n'
 
 
 class Stats(PrettyClass):
@@ -95,6 +95,6 @@ def create_pokemon(pokedex_entry) -> Pokemon:
 
 
 pokedex_number = random.randrange(1, 151)
-random_pokemon = create_pokemon(1)
+random_pokemon = create_pokemon(pokedex_number)
 pprint(random_pokemon)
 

@@ -22,7 +22,7 @@ def image_to_ascii_art(img_data, output_width=120):
     pixels = img.getdata()
 
     # replace each pixel with a character from array
-    chars = ["B", "S", "#", "&", "@", "$", "%", "*", "!", ":", "."]
+    chars = ['#', '?', '%', '.', 'S', '+', '.', '*', ':', ',', '@']
     new_pixels = [chars[pixel // 25] for pixel in pixels]
     new_pixels = ''.join(new_pixels)
 
