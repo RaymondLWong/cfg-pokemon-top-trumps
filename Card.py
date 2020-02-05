@@ -83,7 +83,7 @@ def create_pokemon(pokedex_entry) -> Pokemon:
     )
 
 
-test = random.randrange(1, 151)
-bulbasaur = create_pokemon(1)
-print(bulbasaur)
+pokedex_number = random.randrange(1, 151)
+random_pokemon = create_pokemon(pokedex_number)
+print(random_pokemon)
 
