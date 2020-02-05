@@ -1,12 +1,22 @@
-import base64
 import random
+from pprint import pprint
+
 import requests
 import pokebase as pb
+from image_to_ascii_art import image_to_ascii_art
 
 
 class PrettyClass:
     def __repr__(self):
         return repr(vars(self))
+
+
+class Sprite:
+    def __init__(self, ascii_art):
+        self.ascii_art = ascii_art
+
+    def __repr__(self):
+        return self.ascii_art
 
 
 class Stats(PrettyClass):
@@ -31,9 +41,10 @@ class Stats(PrettyClass):
         self.evasion = evasion
 
 
-def get_sprite(url) -> str:
-    # return base64.b64encode(requests.get(url).content)
-    return ''
+def get_sprite(url) -> Sprite:
+    image_data = requests.get(url).content
+    ascii_art = image_to_ascii_art(image_data)
+    return Sprite(ascii_art)
 
 
 class Pokemon(PrettyClass):
@@ -84,6 +95,6 @@ def create_pokemon(pokedex_entry) -> Pokemon:
 
 
 pokedex_number = random.randrange(1, 151)
-random_pokemon = create_pokemon(pokedex_number)
-print(random_pokemon)
+random_pokemon = create_pokemon(1)
+pprint(random_pokemon)
 
