@@ -1,12 +1,15 @@
 import base64
 import random
-from pprint import pprint
-
 import requests
 import pokebase as pb
 
 
-class Stats:
+class PrettyClass:
+    def __repr__(self):
+        return repr(vars(self))
+
+
+class Stats(PrettyClass):
     def __init__(
             self,
             hp: int,
@@ -29,10 +32,11 @@ class Stats:
 
 
 def get_sprite(url) -> str:
-    return base64.b64encode(requests.get(url).content)
+    # return base64.b64encode(requests.get(url).content)
+    return ''
 
 
-class Pokemon:
+class Pokemon(PrettyClass):
     def __init__(self, pokedex_entry: int, name: str, height: int, weight: int, sprite: str, stats: Stats):
         self.pokedex_entry = pokedex_entry
         self.name = name
@@ -81,5 +85,5 @@ def create_pokemon(pokedex_entry) -> Pokemon:
 
 test = random.randrange(1, 151)
 bulbasaur = create_pokemon(1)
-pprint(bulbasaur)
+print(bulbasaur)
 
