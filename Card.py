@@ -100,7 +100,7 @@ def get_available_generations() -> int:
     return int(results.count)
 
 
-def get_static_generation(gen: int) -> int:
+def get_static_pokemon_count_for_generation(gen: int) -> int:
     generations = {
         1: 151,
         2: 100,
@@ -113,14 +113,33 @@ def get_static_generation(gen: int) -> int:
     return generations[gen] or -1
 
 
-def get_pokedex_entry(gen: int, relative_id: int) -> int:
+def get_poke_id(gen: int, relative_id: int) -> int:
     past_gen_count = 0
     for cumulative_gen in range(1, gen):
-        past_gen_count += get_static_generation(cumulative_gen)
+        past_gen_count += get_static_pokemon_count_for_generation(cumulative_gen)
     return past_gen_count + relative_id
 
 
-pokedex_number = random.randrange(1, 151)
-random_pokemon = create_pokemon(pokedex_number)
-pprint(random_pokemon)
+def get_random_pokemon(gen: int) -> Pokemon:
+    gen_relative_poke_id = random.randrange(1, get_static_pokemon_count_for_generation(gen))
+    poke_id = get_poke_id(gen, gen_relative_poke_id)
+    pokemon_card = create_pokemon(poke_id)
+    return pokemon_card
+
+
+def prompt_user_for_generation() -> int:
+    user_picked_gen = input('Pick a generation between 1-7: ')
+    try:
+        gen = int(user_picked_gen)
+        print(f'You chose Generation {gen}!')
+        return gen
+    except ValueError:
+        print('Defaulting to Generation 1...')
+        return 1
+
+
+generation = prompt_user_for_generation()
+pokemon = get_random_pokemon(generation)
+print(f'You drew {pokemon.name.capitalize()}!')
+pprint(pokemon)
 
