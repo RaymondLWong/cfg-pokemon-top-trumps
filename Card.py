@@ -94,6 +94,32 @@ def create_pokemon(pokedex_entry) -> Pokemon:
     )
 
 
+def get_available_generations() -> int:
+    # warning, there's an API limit of 100 / minute, so avoid using this function too often
+    results = requests.get('https://pokeapi.co/api/v2/generation/').text
+    return int(results.count)
+
+
+def get_static_generation(gen: int) -> int:
+    generations = {
+        1: 151,
+        2: 100,
+        3: 135,
+        4: 107,
+        5: 156,
+        6: 72,
+        7: 81
+    }
+    return generations[gen] or -1
+
+
+def get_pokedex_entry(gen: int, relative_id: int) -> int:
+    past_gen_count = 0
+    for cumulative_gen in range(1, gen):
+        past_gen_count += get_static_generation(cumulative_gen)
+    return past_gen_count + relative_id
+
+
 pokedex_number = random.randrange(1, 151)
 random_pokemon = create_pokemon(pokedex_number)
 pprint(random_pokemon)
