@@ -17,7 +17,7 @@ def format_as_table(dictionary: dict) -> str:
     table = ''
     for index, (key, value) in enumerate(dictionary.items()):
         end = '\n' if index % 2 == 1 else ''
-        table += '{:<20} {:<15}{}'.format(key, value, end)
+        table += '{:<20} {:<5}{}'.format(key, value, end)
     return f'\n{table}'
 
 
@@ -79,7 +79,7 @@ class Pokemon(PrettyClass):
     def __repr__(self):
         sorted_props = {}
         sorted_props.update({'poke_id': self.poke_id})
-        sorted_props.update({'name': self.name})
+        sorted_props.update({'name': f'[ {self.name.capitalize()} ]'})
         sorted_props.update({'height': self.height})
         sorted_props.update({'weight': self.weight})
         all_props = f'\n{self.sprite}\n'
