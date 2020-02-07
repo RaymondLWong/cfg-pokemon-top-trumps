@@ -1,14 +1,29 @@
 import random
-from pprint import pprint
-
+import pprint as pp
 import requests
 import pokebase as pb
 from image_to_ascii_art import image_to_ascii_art
 
 
+def get_available_props(dictionary: dict) -> dict:
+    copy = {}
+    for key, value in dictionary.items():
+        if value != -1:
+            copy.update({key: value})
+    return copy
+
+
+def format_as_table(dictionary: dict) -> str:
+    table = ''
+    for index, (key, value) in enumerate(dictionary.items()):
+        end = '\n' if index % 2 == 1 else ''
+        table += '{:<20} {:<15}{}'.format(key, value, end)
+    return f'\n{table}'
+
+
 class PrettyClass:
     def __repr__(self):
-        return repr(vars(self))
+        return pp.pformat(vars(self))
 
 
 class Sprite:
@@ -16,7 +31,8 @@ class Sprite:
         self.ascii_art = ascii_art
 
     def __repr__(self):
-        return '\n' + self.ascii_art + '\n'
+        # return new_line(self.ascii_art)
+        return ''
 
 
 class Stats(PrettyClass):
@@ -40,6 +56,11 @@ class Stats(PrettyClass):
         self.accuracy = accuracy
         self.evasion = evasion
 
+    def __repr__(self):
+        stats_as_dict = vars(self)
+        avail_stats = get_available_props(stats_as_dict)
+        return format_as_table(avail_stats)
+
 
 def get_sprite(url) -> Sprite:
     image_data = requests.get(url).content
@@ -48,8 +69,8 @@ def get_sprite(url) -> Sprite:
 
 
 class Pokemon(PrettyClass):
-    def __init__(self, pokedex_entry: int, name: str, height: int, weight: int, sprite: str, stats: Stats):
-        self.pokedex_entry = pokedex_entry
+    def __init__(self, poke_id: int, name: str, height: int, weight: int, sprite: str, stats: Stats):
+        self.poke_id = poke_id
         self.name = name
         self.height = height
         self.weight = weight
@@ -141,5 +162,4 @@ def prompt_user_for_generation() -> int:
 generation = prompt_user_for_generation()
 pokemon = get_random_pokemon(generation)
 print(f'You drew {pokemon.name.capitalize()}!')
-pprint(pokemon)
-
+pp.pprint(pokemon)
