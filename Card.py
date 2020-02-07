@@ -31,8 +31,7 @@ class Sprite:
         self.ascii_art = ascii_art
 
     def __repr__(self):
-        # return new_line(self.ascii_art)
-        return ''
+        return self.ascii_art
 
 
 class Stats(PrettyClass):
@@ -76,6 +75,17 @@ class Pokemon(PrettyClass):
         self.weight = weight
         self.sprite = get_sprite(sprite)
         self.stats = stats
+
+    def __repr__(self):
+        sorted_props = {}
+        sorted_props.update({'poke_id': self.poke_id})
+        sorted_props.update({'name': self.name})
+        sorted_props.update({'height': self.height})
+        sorted_props.update({'weight': self.weight})
+        all_props = f'\n{self.sprite}\n'
+        all_props += format_as_table(sorted_props)
+        all_props += self.stats.__str__()
+        return all_props
 
 
 def flatten_stats(stats):
@@ -157,9 +167,3 @@ def prompt_user_for_generation() -> int:
     except ValueError:
         print('Defaulting to Generation 1...')
         return 1
-
-
-generation = prompt_user_for_generation()
-pokemon = get_random_pokemon(generation)
-print(f'You drew {pokemon.name.capitalize()}!')
-pp.pprint(pokemon)
