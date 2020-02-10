@@ -2,7 +2,9 @@ import random
 import pprint as pp
 import requests
 import pokebase as pb
+import math
 from image_to_ascii_art import image_to_ascii_art
+from colorama import Fore, Style
 
 
 def get_available_props(dictionary: dict) -> dict:
@@ -13,11 +15,15 @@ def get_available_props(dictionary: dict) -> dict:
     return copy
 
 
-def format_as_table(dictionary: dict) -> str:
+def format_as_table(dictionary: dict, columns: int = 2, label_offset: int = 0) -> str:
+    rows = math.ceil(len(dictionary) / columns)
+    labels = [label_offset + x * rows for x in range(columns)]
     table = ''
     for index, (key, value) in enumerate(dictionary.items()):
-        end = '\n' if index % 2 == 1 else ''
-        table += '{:<20} {:<5}{}'.format(key, value, end)
+        end = '\n' if index % columns == 1 else ''
+        col = index % columns
+        labels[col] += 1
+        table += '{:<3} {:<17} {:<7}{}'.format(f'{labels[col]})', key, value, end)
     return f'\n{table}'
 
 
@@ -58,7 +64,7 @@ class Stats(PrettyClass):
     def __repr__(self):
         stats_as_dict = vars(self)
         avail_stats = get_available_props(stats_as_dict)
-        return format_as_table(avail_stats)
+        return format_as_table(avail_stats, label_offset=4)
 
 
 def get_sprite(url) -> Sprite:
@@ -79,7 +85,7 @@ class Pokemon(PrettyClass):
     def __repr__(self):
         sorted_props = {}
         sorted_props.update({'poke_id': self.poke_id})
-        sorted_props.update({'name': f'[ {self.name.capitalize()} ]'})
+        sorted_props.update({'name': f'{Fore.CYAN}{self.name.capitalize()}{Style.RESET_ALL}'})
         sorted_props.update({'height': self.height})
         sorted_props.update({'weight': self.weight})
         all_props = f'\n{self.sprite}\n'
