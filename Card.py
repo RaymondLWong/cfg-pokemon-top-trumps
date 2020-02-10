@@ -62,10 +62,10 @@ class Entry:
         return pp.pformat(self.value)
 
 
-def get_max_entry(entries: dict) -> int:
+def get_max_entry(entries: Mapping[str, Entry]) -> int:
     max_shortcut = 0
     for entry in entries.values():
-        if isinstance(entry, Entry) and entry.shortcut > max_shortcut:
+        if entry.shortcut > max_shortcut:
             max_shortcut = entry.shortcut
     return max_shortcut
 
@@ -111,8 +111,8 @@ class Pokemon(PrettyClass):
         self.weight = Entry(weight)
         self.sprite = get_sprite(sprite)
         self.stats = stats
-        self.option_count = self._calculate_option_count()
         self.str_repr = self.determine_str_repr()
+        self.option_count = 3 + get_max_entry(vars(self.stats))
 
     def determine_str_repr(self) -> str:
         sorted_props = {}
@@ -127,12 +127,6 @@ class Pokemon(PrettyClass):
 
     def __repr__(self):
         return self.str_repr
-
-    def get_number_of_options(self) -> int:
-        return self.option_count
-
-    def _calculate_option_count(self):
-        return 3 + get_max_entry(vars(self.stats))
 
 
 def flatten_stats(stats):

@@ -26,15 +26,15 @@ class Game:
         print(f'You choose {highlight(name, Fore.YELLOW)} with a value of {highlight(entry.value, Fore.YELLOW)}')
         enemy_pokemon = get_random_pokemon(generation)
         pp.pprint(enemy_pokemon)
-        enemy_option = random.randrange(1, enemy_pokemon.get_number_of_options())
-        enemy_stat = find_entry(enemy_option, vars(enemy_pokemon))
+        enemy_option = random.randrange(1, enemy_pokemon.option_count)
+        (enemy_stat, enemy_stat_value) = find_entry(enemy_option, vars(enemy_pokemon))
         print(f'Enemy got {highlight(enemy_pokemon.name, Fore.RED)}!')
-        print(f'Enemy stat {enemy_stat[0]}: {enemy_stat[1]}')
+        print(f'Enemy chose {highlight(enemy_stat, Fore.YELLOW)} with a value of {highlight(enemy_stat_value, Fore.YELLOW)}')
 
     def prompt_user_for_stat(self) -> (str, Entry):
         valid_number = False
         while not valid_number:
-            max_options = self.pokemon.get_number_of_options()
+            max_options = self.pokemon.option_count
             number = input(f'Choose a stat by pressing the corresponding number key (1-{max_options}): ')
             try:
                 option = int(number)
