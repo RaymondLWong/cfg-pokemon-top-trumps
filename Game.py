@@ -3,18 +3,21 @@ from colorama import Fore, Style
 from Card import get_static_generation_counts, get_random_pokemon, Entry
 
 
+def highlight(string: str) -> str:
+    return f'{Fore.CYAN}{string}{Style.RESET_ALL}'
+
+
 class Game:
     def __init__(self):
         generation = prompt_user_for_generation()
         self.pokemon = get_random_pokemon(generation)
-        coloured_name = f'{Fore.CYAN}{self.pokemon.name.capitalize()}{Style.RESET_ALL}'
-        print(f'You drew {coloured_name}!')
+        print(f'You drew {highlight(self.pokemon.name.capitalize())}!')
         pp.pprint(self.pokemon)
         (name, entry) = self.prompt_user_for_stat()
-        print(f'You choose {name} with a value of {entry.value}')
+        print(f'You choose {highlight(name)} with a value of {highlight(entry.value)}')
 
     def find_entry(self, option: int) -> (str, Entry):
-        for name, entry in vars(self.pokemon):
+        for name, entry in vars(self.pokemon).items():
             if entry.shortcut == option:
                 return name, entry
 
