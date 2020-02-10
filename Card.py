@@ -45,12 +45,15 @@ class PrettyClass:
 
 
 class Sprite:
-    def __init__(self, ascii_art):
+    def __init__(self, ascii_art, show_avatar: bool = False):
         self.ascii_art = ascii_art
+        self.show_avatar = show_avatar
 
     def __repr__(self):
-        # return self.ascii_art
-        return ''
+        if self.show_avatar:
+            return self.ascii_art
+        else:
+            return '[ AVATAR HIDDEN ]'
 
 
 class Entry:
@@ -112,7 +115,7 @@ class Pokemon(PrettyClass):
         self.sprite = get_sprite(sprite)
         self.stats = stats
         self.str_repr = self.determine_str_repr()
-        self.option_count = 3 + get_max_entry(vars(self.stats))
+        self.option_count = get_max_entry(vars(self.stats))
 
     def determine_str_repr(self) -> str:
         sorted_props = {}
