@@ -1,11 +1,11 @@
 import random
 import pprint as pp
-from typing import Generic, TypeVar, Mapping
 import requests
 import pokebase as pb
 import math
 from image_to_ascii_art import image_to_ascii_art
 from colorama import Fore, Style
+from typing import Generic, TypeVar, Mapping
 
 T = TypeVar('T')
 
@@ -13,7 +13,6 @@ T = TypeVar('T')
 def get_available_props(dictionary: dict) -> dict:
     copy = {}
     for key, value in dictionary.items():
-        print(f'key: {key}, value: {value}')
         if isinstance(value, Entry):
             if value.value is not None:
                 copy.update({key: value})
@@ -23,6 +22,7 @@ def get_available_props(dictionary: dict) -> dict:
 
 
 def format_as_table(dictionary: dict, columns: int = 2, label_offset: int = 0) -> str:
+    print(f'format_as_table; offset={label_offset}')
     rows = math.ceil(len(dictionary) / columns)
     labels = [label_offset + x * rows for x in range(columns)]
     table = ''
@@ -32,8 +32,8 @@ def format_as_table(dictionary: dict, columns: int = 2, label_offset: int = 0) -
         shortcut = ''
         if entry_is_class and isinstance(entry.value, int):
             labels[col] += 1
-            entry.shortcut = labels[col]
-            shortcut = f'{entry.shortcut})'
+            dictionary[key].shortcut = labels[col]
+            shortcut = f'( {entry.shortcut} )'
         value = entry.value if entry_is_class else entry
         end = '\n' if index % columns == 1 else ''
         table += '{:<3} {:<17} {:<7}{}'.format(shortcut, key, value, end)
@@ -50,7 +50,8 @@ class Sprite:
         self.ascii_art = ascii_art
 
     def __repr__(self):
-        return self.ascii_art
+        # return self.ascii_art
+        return ''
 
 
 class Entry:
@@ -60,6 +61,15 @@ class Entry:
 
     def __repr__(self):
         return pp.pformat(self.value)
+
+
+def get_max_entry(entries: dict) -> int:
+    print('get_max')
+    max_shortcut = 0
+    for entry in entries.values():
+        if isinstance(entry, Entry) and entry.shortcut > max_shortcut:
+            max_shortcut = entry.shortcut
+    return max_shortcut
 
 
 class Stats(PrettyClass, Generic[T]):
@@ -84,8 +94,10 @@ class Stats(PrettyClass, Generic[T]):
         self.evasion = Entry(evasion)
 
     def __repr__(self):
-        avail_stats = get_available_props(vars(self))
-        return format_as_table(avail_stats, label_offset=4)
+        print('Stats.__repr')
+        props_as_dict = vars(self)
+        avail_stats = get_available_props(props_as_dict)
+        return format_as_table(avail_stats, label_offset=3)
 
 
 def get_sprite(url) -> Sprite:
@@ -104,6 +116,7 @@ class Pokemon(PrettyClass):
         self.stats = stats
 
     def __repr__(self):
+        print('Pokemon.__repr')
         sorted_props = {}
         sorted_props.update({'poke_id': self.poke_id})
         sorted_props.update({'name': f'{Fore.CYAN}{self.name.capitalize()}{Style.RESET_ALL}'})
