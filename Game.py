@@ -27,15 +27,23 @@ def highlight(string: str, colour: Fore = Fore.CYAN) -> str:
 class Game:
     def __init__(self):
         self.generation = prompt_user_for_generation()
+        self.battles = 0
+        self.wins = 0
+        self.draws = 0
+        self.loses = 0
 
         user_wants_to_battle = True
         while user_wants_to_battle:
             self.start()
             user_wants_to_battle = self.prompt_continue()
+        self.show_score()
 
     def prompt_continue(self):
         battle_again = input(f'Do you want to battle again? (y/n) ')
         return battle_again != 'n'
+
+    def show_score(self):
+        print(f'Your score: {self.wins} wins, {self.loses} loses, {self.draws} draws (total {self.battles})')
 
     def start(self):
         user_pokemon = get_random_pokemon(self.generation)
@@ -66,6 +74,7 @@ class Game:
                 print(f'Invalid number {number}, please try again.')
 
     def battle(self, choice: int, user_pokemon: Pokemon, enemy_pokemon: Pokemon) -> BattleResult:
+        self.battles += 1
         user_pokemon_stat = find_entry(choice, vars(user_pokemon))[1].value
         enemy_pokemon_stat = find_entry(choice, vars(enemy_pokemon))[1].value
 
@@ -76,13 +85,15 @@ class Game:
         else:
             return BattleResult.LOSE
 
-    @staticmethod
-    def declare_winner(result: BattleResult):
+    def declare_winner(self, result: BattleResult):
         if result == BattleResult.WIN:
+            self.wins += 1
             print(f"You {highlight('WIN', Fore.GREEN)}!")
         elif result == BattleResult.LOSE:
+            self.loses += 1
             print(f"You {highlight('LOSE', Fore.RED)}!")
         else:
+            self.draws += 1
             print(f"You {highlight('DRAW', Fore.YELLOW)}!")
 
 
