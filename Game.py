@@ -34,7 +34,7 @@ class Game:
 
         user_wants_to_battle = True
         while user_wants_to_battle:
-            self.start()
+            self.commence_battle()
             user_wants_to_battle = self.prompt_continue()
         self.show_score()
 
@@ -48,7 +48,7 @@ class Game:
         draw_count = f'{self.draws} draws'
         print(f'Your score: {highlight(win_count, Fore.GREEN)}, {highlight(lose_count, Fore.RED)}, {highlight(draw_count, Fore.YELLOW)} (total {self.battles})')
 
-    def start(self):
+    def commence_battle(self):
         user_pokemon = get_random_pokemon(self.generation)
         print(f'You drew {highlight(user_pokemon.name)}!')
         pp.pprint(user_pokemon)
@@ -61,7 +61,7 @@ class Game:
         enemy_stat = find_entry(enemy_option, vars(enemy_pokemon))[1]
         print(
             f'Enemy {highlight(enemy_pokemon.name, Fore.RED)} has a {stat_highlighted} of {highlight(enemy_stat, Fore.YELLOW)}')
-        result = self.battle(entry.shortcut, user_pokemon, enemy_pokemon)
+        result = self.do_battle(entry.shortcut, user_pokemon, enemy_pokemon)
         self.declare_winner(result)
 
     def prompt_user_for_stat(self, user_pokemon: Pokemon) -> (str, Entry):
@@ -76,7 +76,7 @@ class Game:
             except ValueError:
                 print(f'Invalid number {number}, please try again.')
 
-    def battle(self, choice: int, user_pokemon: Pokemon, enemy_pokemon: Pokemon) -> BattleResult:
+    def do_battle(self, choice: int, user_pokemon: Pokemon, enemy_pokemon: Pokemon) -> BattleResult:
         self.battles += 1
         user_pokemon_stat = find_entry(choice, vars(user_pokemon))[1].value
         enemy_pokemon_stat = find_entry(choice, vars(enemy_pokemon))[1].value
