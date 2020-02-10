@@ -8,21 +8,21 @@ from image_to_ascii_art import image_to_ascii_art
 from colorama import Fore, Style
 
 T = TypeVar('T')
-IS = TypeVar('IS', int, str)
-Props = Mapping[str, IS]
 
 
-def get_available_props(dictionary: Props) -> Props:
+def get_available_props(dictionary: dict) -> dict:
     copy = {}
     for key, value in dictionary.items():
+        print(f'key: {key}, value: {value}')
         if isinstance(value, Entry):
-            value = value.value
-        if value != -1:
+            if value.value is not None:
+                copy.update({key: value})
+        elif value is not None:
             copy.update({key: value})
     return copy
 
 
-def format_as_table(dictionary: Props, columns: int = 2, label_offset: int = 0) -> str:
+def format_as_table(dictionary: dict, columns: int = 2, label_offset: int = 0) -> str:
     rows = math.ceil(len(dictionary) / columns)
     labels = [label_offset + x * rows for x in range(columns)]
     table = ''
@@ -84,8 +84,7 @@ class Stats(PrettyClass, Generic[T]):
         self.evasion = Entry(evasion)
 
     def __repr__(self):
-        stats_as_dict = vars(self)
-        avail_stats = get_available_props(stats_as_dict)
+        avail_stats = get_available_props(vars(self))
         return format_as_table(avail_stats, label_offset=4)
 
 
@@ -128,14 +127,14 @@ def flatten_stats(stats):
 def get_stats(stats) -> Stats:
     flat = flatten_stats(stats)
     return Stats(
-        hp=flat.get('hp', -1),
-        attack=flat.get('attack', -1),
-        defence=flat.get('defense', -1),
-        special_attack=flat.get('special-attack', -1),
-        special_defence=flat.get('special-defense', -1),
-        speed=flat.get('speed', -1),
-        accuracy=flat.get('accuracy', -1),
-        evasion=flat.get('evasion', -1)
+        hp=flat.get('hp', None),
+        attack=flat.get('attack', None),
+        defence=flat.get('defense', None),
+        special_attack=flat.get('special-attack', None),
+        special_defence=flat.get('special-defense', None),
+        speed=flat.get('speed', None),
+        accuracy=flat.get('accuracy', None),
+        evasion=flat.get('evasion', None)
     )
 
 
@@ -173,7 +172,7 @@ def get_static_generation_counts() -> Mapping[int, int]:
 
 def get_static_pokemon_count_for_generation(gen: int) -> int:
     generations = get_static_generation_counts()
-    return generations[gen] or -1
+    return generations[gen]
 
 
 def get_poke_id(gen: int, relative_id: int) -> int:
