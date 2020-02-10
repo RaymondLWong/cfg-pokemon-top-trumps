@@ -1,10 +1,13 @@
 import random
 import pprint as pp
+from typing import Generic, TypeVar, TypedDict, Mapping
 import requests
 import pokebase as pb
 import math
 from image_to_ascii_art import image_to_ascii_art
 from colorama import Fore, Style
+
+T = TypeVar('T')
 
 
 def get_available_props(dictionary: dict) -> dict:
@@ -40,17 +43,22 @@ class Sprite:
         return self.ascii_art
 
 
-class Stats(PrettyClass):
+class Entry(TypedDict):
+    value: int
+    shortcut: int
+
+
+class Stats(PrettyClass, Generic[T]):
     def __init__(
             self,
-            hp: int,
-            attack: int,
-            defence: int,
-            special_attack: int,
-            special_defence: int,
-            speed: int,
-            accuracy: int,
-            evasion: int
+            hp: T,
+            attack: T,
+            defence: T,
+            special_attack: T,
+            special_defence: T,
+            speed: T,
+            accuracy: T,
+            evasion: T
     ):
         self.hp = hp
         self.attack = attack
@@ -117,12 +125,12 @@ def get_stats(stats) -> Stats:
     )
 
 
-def create_pokemon(pokedex_entry) -> Pokemon:
-    info = pb.pokemon(pokedex_entry)
+def create_pokemon(poke_id) -> Pokemon:
+    info = pb.pokemon(poke_id)
     sprite = info.sprites.front_default
     stats = get_stats(info.stats)
     return Pokemon(
-        pokedex_entry,
+        poke_id,
         info.name,
         info.height,
         info.weight,
@@ -137,8 +145,8 @@ def get_available_generations() -> int:
     return int(results.count)
 
 
-def get_static_pokemon_count_for_generation(gen: int) -> int:
-    generations = {
+def get_static_generation_counts() -> Mapping[int, int]:
+    return {
         1: 151,
         2: 100,
         3: 135,
@@ -147,6 +155,10 @@ def get_static_pokemon_count_for_generation(gen: int) -> int:
         6: 72,
         7: 81
     }
+
+
+def get_static_pokemon_count_for_generation(gen: int) -> int:
+    generations = get_static_generation_counts()
     return generations[gen] or -1
 
 
@@ -165,10 +177,14 @@ def get_random_pokemon(gen: int) -> Pokemon:
 
 
 def prompt_user_for_generation() -> int:
-    user_picked_gen = input('Pick a generation between 1-7: ')
+    generation_count = len(get_static_generation_counts())
+    user_picked_gen = input(f'Pick a generation between 1-{generation_count}: ')
     try:
         gen = int(user_picked_gen)
         print(f'You chose Generation {gen}!')
+        if gen not in get_static_generation_counts():
+            print(f'Generation {gen} is not supported. Defaulting to Gen 1.')
+            gen = 1
         return gen
     except ValueError:
         print('Defaulting to Generation 1...')
