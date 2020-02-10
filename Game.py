@@ -26,35 +26,47 @@ def highlight(string: str, colour: Fore = Fore.CYAN) -> str:
 
 class Game:
     def __init__(self):
-        generation = prompt_user_for_generation()
-        self.user_pokemon = get_random_pokemon(generation)
-        print(f'You drew {highlight(self.user_pokemon.name)}!')
-        pp.pprint(self.user_pokemon)
-        (name, entry) = self.prompt_user_for_stat()
+        self.generation = prompt_user_for_generation()
+
+        user_wants_to_battle = True
+        while user_wants_to_battle:
+            self.start()
+            user_wants_to_battle = self.prompt_continue()
+
+    def prompt_continue(self):
+        battle_again = input(f'Do you want to battle again? (y/n) ')
+        return battle_again != 'n'
+
+    def start(self):
+        user_pokemon = get_random_pokemon(self.generation)
+        print(f'You drew {highlight(user_pokemon.name)}!')
+        pp.pprint(user_pokemon)
+        (name, entry) = self.prompt_user_for_stat(user_pokemon)
         stat_highlighted = highlight(name, Fore.YELLOW)
         print(f'You choose {stat_highlighted} with a value of {highlight(entry.value, Fore.YELLOW)}')
-        enemy_pokemon = get_random_pokemon(generation)
+        enemy_pokemon = get_random_pokemon(self.generation)
         pp.pprint(enemy_pokemon)
         enemy_option = random.randrange(1, enemy_pokemon.option_count)
         enemy_stat = find_entry(enemy_option, vars(enemy_pokemon))[1]
-        print(f'Enemy {highlight(enemy_pokemon.name, Fore.RED)} has a {stat_highlighted} of {highlight(enemy_stat, Fore.YELLOW)}')
-        result = self.battle(entry.shortcut, enemy_pokemon)
+        print(
+            f'Enemy {highlight(enemy_pokemon.name, Fore.RED)} has a {stat_highlighted} of {highlight(enemy_stat, Fore.YELLOW)}')
+        result = self.battle(entry.shortcut, user_pokemon, enemy_pokemon)
         self.declare_winner(result)
 
-    def prompt_user_for_stat(self) -> (str, Entry):
+    def prompt_user_for_stat(self, user_pokemon: Pokemon) -> (str, Entry):
         valid_number = False
         while not valid_number:
-            max_options = self.user_pokemon.option_count
+            max_options = user_pokemon.option_count
             number = input(f'Choose a stat by pressing the corresponding number key (1-{max_options}): ')
             try:
                 option = int(number)
                 valid_number = True
-                return find_entry(option, vars(self.user_pokemon))
+                return find_entry(option, vars(user_pokemon))
             except ValueError:
                 print(f'Invalid number {number}, please try again.')
 
-    def battle(self, choice: int, enemy_pokemon: Pokemon) -> BattleResult:
-        user_pokemon_stat = find_entry(choice, vars(self.user_pokemon))[1].value
+    def battle(self, choice: int, user_pokemon: Pokemon, enemy_pokemon: Pokemon) -> BattleResult:
+        user_pokemon_stat = find_entry(choice, vars(user_pokemon))[1].value
         enemy_pokemon_stat = find_entry(choice, vars(enemy_pokemon))[1].value
 
         if user_pokemon_stat > enemy_pokemon_stat:

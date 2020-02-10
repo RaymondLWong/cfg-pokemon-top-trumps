@@ -45,7 +45,7 @@ class PrettyClass:
 
 
 class Sprite:
-    def __init__(self, ascii_art, show_avatar: bool = False):
+    def __init__(self, ascii_art, show_avatar: bool = True):
         self.ascii_art = ascii_art
         self.show_avatar = show_avatar
 
