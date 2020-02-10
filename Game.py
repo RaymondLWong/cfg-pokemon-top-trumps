@@ -43,10 +43,11 @@ class Game:
         return battle_again != 'n'
 
     def show_score(self):
-        win_count = f'{self.wins} wins'
-        lose_count = f'{self.loses} loses'
-        draw_count = f'{self.draws} draws'
-        print(f'Your score: {highlight(win_count, Fore.GREEN)}, {highlight(lose_count, Fore.RED)}, {highlight(draw_count, Fore.YELLOW)} (total {self.battles})')
+        win_count = highlight(f'{self.wins} wins', Fore.GREEN)
+        lose_count = highlight(f'{self.loses} loses', Fore.RED)
+        draw_count = highlight(f'{self.draws} draws', Fore.YELLOW)
+        total = highlight(f'{self.battles} total', Fore.CYAN)
+        print(f'Your score: {win_count}, {lose_count}, {draw_count} ({total})')
 
     def commence_battle(self):
         user_pokemon = get_random_pokemon(self.generation)
