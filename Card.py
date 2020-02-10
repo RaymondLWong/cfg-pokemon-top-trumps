@@ -200,18 +200,3 @@ def get_random_pokemon(gen: int) -> Pokemon:
     poke_id = get_poke_id(gen, gen_relative_poke_id)
     pokemon_card = create_pokemon(poke_id)
     return pokemon_card
-
-
-def prompt_user_for_generation() -> int:
-    generation_count = len(get_static_generation_counts())
-    user_picked_gen = input(f'Pick a generation between 1-{generation_count}: ')
-    try:
-        gen = int(user_picked_gen)
-        print(f'You chose Generation {gen}!')
-        if gen not in get_static_generation_counts():
-            print(f'Generation {gen} is not supported. Defaulting to Gen 1.')
-            gen = 1
-        return gen
-    except ValueError:
-        print('Defaulting to Generation 1...')
-        return 1
