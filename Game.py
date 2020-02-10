@@ -1,34 +1,45 @@
 import pprint as pp
+import random
 from colorama import Fore, Style
-from Card import get_static_generation_counts, get_random_pokemon, Entry
+from Card import get_static_generation_counts, get_random_pokemon, Entry, Stats
 
 
-def highlight(string: str) -> str:
-    return f'{Fore.CYAN}{string}{Style.RESET_ALL}'
+def find_entry(option: int, entries: dict) -> (str, Entry):
+    for name, entry in entries.items():
+        if isinstance(entry, Stats):
+            return find_entry(option, vars(entry))
+        elif isinstance(entry, Entry) and entry.shortcut == option:
+            return name, entry
+
+
+def highlight(string: str, colour: Fore = Fore.CYAN) -> str:
+    return f'{colour}{string}{Style.RESET_ALL}'
 
 
 class Game:
     def __init__(self):
         generation = prompt_user_for_generation()
         self.pokemon = get_random_pokemon(generation)
-        print(f'You drew {highlight(self.pokemon.name.capitalize())}!')
+        print(f'You drew {highlight(self.pokemon.name)}!')
         pp.pprint(self.pokemon)
         (name, entry) = self.prompt_user_for_stat()
-        print(f'You choose {highlight(name)} with a value of {highlight(entry.value)}')
-
-    def find_entry(self, option: int) -> (str, Entry):
-        for name, entry in vars(self.pokemon).items():
-            if entry.shortcut == option:
-                return name, entry
+        print(f'You choose {highlight(name, Fore.YELLOW)} with a value of {highlight(entry.value, Fore.YELLOW)}')
+        enemy_pokemon = get_random_pokemon(generation)
+        pp.pprint(enemy_pokemon)
+        enemy_option = random.randrange(1, enemy_pokemon.get_number_of_options())
+        enemy_stat = find_entry(enemy_option, vars(enemy_pokemon))
+        print(f'Enemy got {highlight(enemy_pokemon.name, Fore.RED)}!')
+        print(f'Enemy stat {enemy_stat[0]}: {enemy_stat[1]}')
 
     def prompt_user_for_stat(self) -> (str, Entry):
         valid_number = False
         while not valid_number:
-            number = input('Choose a stat by pressing the corresponding number key: ')
+            max_options = self.pokemon.get_number_of_options()
+            number = input(f'Choose a stat by pressing the corresponding number key (1-{max_options}): ')
             try:
                 option = int(number)
                 valid_number = True
-                return self.find_entry(option)
+                return find_entry(option, vars(self.pokemon))
             except ValueError:
                 print(f'Invalid number {number}, please try again.')
 
@@ -49,4 +60,3 @@ def prompt_user_for_generation() -> int:
 
 
 new_game = Game()
-

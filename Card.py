@@ -106,22 +106,33 @@ def get_sprite(url) -> Sprite:
 class Pokemon(PrettyClass):
     def __init__(self, poke_id: int, name: str, height: int, weight: int, sprite: str, stats: Stats):
         self.poke_id = Entry(poke_id)
-        self.name = name
+        self.name = name.capitalize()
         self.height = Entry(height)
         self.weight = Entry(weight)
         self.sprite = get_sprite(sprite)
         self.stats = stats
+        self.option_count = self._calculate_option_count()
+        self.str_repr = self.determine_str_repr()
 
-    def __repr__(self):
+    def determine_str_repr(self) -> str:
         sorted_props = {}
         sorted_props.update({'poke_id': self.poke_id})
-        sorted_props.update({'name': f'{Fore.CYAN}{self.name.capitalize()}{Style.RESET_ALL}'})
+        sorted_props.update({'name': f'{Fore.CYAN}{self.name}{Style.RESET_ALL}'})
         sorted_props.update({'height': self.height})
         sorted_props.update({'weight': self.weight})
         all_props = f'\n{self.sprite}\n'
         all_props += format_as_table(sorted_props)
         all_props += self.stats.__str__()
         return all_props
+
+    def __repr__(self):
+        return self.str_repr
+
+    def get_number_of_options(self) -> int:
+        return self.option_count
+
+    def _calculate_option_count(self):
+        return 3 + get_max_entry(vars(self.stats))
 
 
 def flatten_stats(stats):
