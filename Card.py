@@ -1,6 +1,6 @@
 import random
 import pprint as pp
-from typing import Generic, TypeVar, TypedDict, Mapping
+from typing import Generic, TypeVar, Mapping
 import requests
 import pokebase as pb
 import math
@@ -8,25 +8,35 @@ from image_to_ascii_art import image_to_ascii_art
 from colorama import Fore, Style
 
 T = TypeVar('T')
+IS = TypeVar('IS', int, str)
+Props = Mapping[str, IS]
 
 
-def get_available_props(dictionary: dict) -> dict:
+def get_available_props(dictionary: Props) -> Props:
     copy = {}
     for key, value in dictionary.items():
+        if isinstance(value, Entry):
+            value = value.value
         if value != -1:
             copy.update({key: value})
     return copy
 
 
-def format_as_table(dictionary: dict, columns: int = 2, label_offset: int = 0) -> str:
+def format_as_table(dictionary: Props, columns: int = 2, label_offset: int = 0) -> str:
     rows = math.ceil(len(dictionary) / columns)
     labels = [label_offset + x * rows for x in range(columns)]
     table = ''
-    for index, (key, value) in enumerate(dictionary.items()):
-        end = '\n' if index % columns == 1 else ''
+    for index, (key, entry) in enumerate(dictionary.items()):
         col = index % columns
-        labels[col] += 1
-        table += '{:<3} {:<17} {:<7}{}'.format(f'{labels[col]})', key, value, end)
+        entry_is_class = isinstance(entry, Entry)
+        shortcut = ''
+        if entry_is_class and isinstance(entry.value, int):
+            labels[col] += 1
+            entry.shortcut = labels[col]
+            shortcut = f'{entry.shortcut})'
+        value = entry.value if entry_is_class else entry
+        end = '\n' if index % columns == 1 else ''
+        table += '{:<3} {:<17} {:<7}{}'.format(shortcut, key, value, end)
     return f'\n{table}'
 
 
@@ -43,9 +53,13 @@ class Sprite:
         return self.ascii_art
 
 
-class Entry(TypedDict):
-    value: int
-    shortcut: int
+class Entry:
+    def __init__(self, value: int, shortcut: int = -1):
+        self.value = value
+        self.shortcut = shortcut
+
+    def __repr__(self):
+        return pp.pformat(self.value)
 
 
 class Stats(PrettyClass, Generic[T]):
@@ -60,14 +74,14 @@ class Stats(PrettyClass, Generic[T]):
             accuracy: T,
             evasion: T
     ):
-        self.hp = hp
-        self.attack = attack
-        self.defence = defence
-        self.special_attack = special_attack
-        self.special_defence = special_defence
-        self.speed = speed
-        self.accuracy = accuracy
-        self.evasion = evasion
+        self.hp = Entry(hp)
+        self.attack = Entry(attack)
+        self.defence = Entry(defence)
+        self.special_attack = Entry(special_attack)
+        self.special_defence = Entry(special_defence)
+        self.speed = Entry(speed)
+        self.accuracy = Entry(accuracy)
+        self.evasion = Entry(evasion)
 
     def __repr__(self):
         stats_as_dict = vars(self)
@@ -83,10 +97,10 @@ def get_sprite(url) -> Sprite:
 
 class Pokemon(PrettyClass):
     def __init__(self, poke_id: int, name: str, height: int, weight: int, sprite: str, stats: Stats):
-        self.poke_id = poke_id
+        self.poke_id = Entry(poke_id)
         self.name = name
-        self.height = height
-        self.weight = weight
+        self.height = Entry(height)
+        self.weight = Entry(weight)
         self.sprite = get_sprite(sprite)
         self.stats = stats
 
