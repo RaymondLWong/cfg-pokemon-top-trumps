@@ -85,7 +85,6 @@ def get_available_generations() -> List[dict]:
         )
         available_generations.append({
             'name': gen_name_and_starters,
-            'value': gen_no,
-            'shortcut_key': gen_no
+            'value': gen_no
         })
     return available_generations

@@ -1,11 +1,15 @@
 import random
 import pprint as pp
+from typing import List
+
 import questionary
 from enum import Enum
 from colorama import Fore
+from questionary import Choice
+
 from Card import Entry, Stats, Pokemon
 from Generations import get_random_pokemon, get_available_generations
-from Utils import highlight
+from Utils import highlight, create_choice
 from prompt_toolkit.styles import Style
 
 
@@ -24,8 +28,13 @@ def find_entry(option: int, entries: dict) -> (str, Entry):
 
 
 class Game:
+    custom_styling = Style([
+        ('highlighted', 'fg:cyan'),
+        ('pointer', 'bold')
+    ])
+
     def __init__(self):
-        self.generation = prompt_user_for_generation()
+        self.generation = self.prompt_user_for_generation()
         self.battles = 0
         self.wins = 0
         self.draws = 0
@@ -52,13 +61,8 @@ class Game:
         user_pokemon = get_random_pokemon(self.generation)
         print(f'You drew {highlight(user_pokemon.name)}!')
         pp.pprint(user_pokemon)
-        (stat_name, user_chosen_pokemon_stat) = self.prompt_user_for_stat(user_pokemon)
-        stat_highlighted = highlight(stat_name, Fore.YELLOW)
-        announce_user_stat = 'You choose {} with a value of {}'.format(
-            stat_highlighted,
-            highlight(user_chosen_pokemon_stat.value, Fore.YELLOW)
-        )
-        print(announce_user_stat)
+        user_chosen_pokemon_stat = self.prompt_user_for_stat(user_pokemon)
+        stat_highlighted = highlight(user_chosen_pokemon_stat.name, Fore.YELLOW)
         enemy_pokemon = get_random_pokemon(self.generation)
         pp.pprint(enemy_pokemon)
         # FIXME: should only pick enemy stat when it's their turn
@@ -73,17 +77,23 @@ class Game:
         result = self.do_battle(user_chosen_pokemon_stat.shortcut, user_pokemon, enemy_pokemon)
         self.declare_winner(result)
 
-    def prompt_user_for_stat(self, user_pokemon: Pokemon) -> (str, Entry):
-        valid_number = False
-        while not valid_number:
-            max_options = user_pokemon.option_count
-            number = input(f'Choose a stat by pressing the corresponding number key (1-{max_options}): ')
-            try:
-                option = int(number)
-                valid_number = True
-                return find_entry(option, vars(user_pokemon))
-            except ValueError:
-                print(f'Invalid number {number}, please try again.')
+    def get_stats_from_pokemon(self, pokemon: Pokemon) -> List[Choice]:
+        choices = [
+            create_choice(pokemon.poke_id),
+            create_choice(pokemon.height),
+            create_choice(pokemon.weight)
+        ]
+        for stat in vars(pokemon.stats).values():
+            choices.append(create_choice(stat))
+        return choices
+
+    def prompt_user_for_stat(self, user_pokemon: Pokemon) -> Entry:
+        return questionary.select(
+            message=f'Choose a stat from {user_pokemon.name} to compete with:',
+            choices=self.get_stats_from_pokemon(user_pokemon),
+            style=self.custom_styling,
+            qmark='💪'
+        ).ask()
 
     def do_battle(self, choice: int, user_pokemon: Pokemon, enemy_pokemon: Pokemon) -> BattleResult:
         self.battles += 1
@@ -108,21 +118,13 @@ class Game:
             self.draws += 1
             print('You {}!'.format(highlight('DRAW', Fore.YELLOW)))
 
-
-def prompt_user_for_generation() -> int:
-    custom_styling = Style([
-        ('highlighted', 'fg:cyan'),
-        ('pointer', 'bold')
-    ])
-    a = questionary.select(
-        message='Choose a generation to pick Pokemon from:',
-        choices=get_available_generations(),
-        style=custom_styling,
-        qmark='⭐'
-    ).ask()
-
-    print(f'answer: {a}')
-    return a
+    def prompt_user_for_generation(self) -> int:
+        return questionary.select(
+            message='Choose a generation to pick Pokemon from:',
+            choices=get_available_generations(),
+            style=self.custom_styling,
+            qmark='⭐'
+        ).ask()
 
 
 new_game = Game()

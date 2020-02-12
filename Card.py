@@ -53,7 +53,13 @@ class Sprite:
 
 
 class Entry:
-    def __init__(self, value: int, shortcut: int = -1):
+    def __init__(
+            self,
+            name: str,
+            value: int,
+            shortcut: int = -1
+    ):
+        self.name = name
         self.value = value
         self.shortcut = shortcut
 
@@ -81,14 +87,14 @@ class Stats(PrettyClass, Generic[T]):
             accuracy: T,
             evasion: T
     ):
-        self.hp = Entry(hp)
-        self.attack = Entry(attack)
-        self.defence = Entry(defence)
-        self.special_attack = Entry(special_attack)
-        self.special_defence = Entry(special_defence)
-        self.speed = Entry(speed)
-        self.accuracy = Entry(accuracy)
-        self.evasion = Entry(evasion)
+        self.hp = Entry('hp', hp)
+        self.attack = Entry('attack', attack)
+        self.defence = Entry('defence', defence)
+        self.special_attack = Entry('special_attack', special_attack)
+        self.special_defence = Entry('special_defence', special_defence)
+        self.speed = Entry('speed ', speed)
+        self.accuracy = Entry('accuracy', accuracy)
+        self.evasion = Entry('evasion', evasion)
 
     def __repr__(self):
         props_as_dict = vars(self)
@@ -103,11 +109,11 @@ def get_sprite(url) -> Sprite:
 
 
 class Pokemon(PrettyClass):
-    def __init__(self, poke_id: int, name: str, height: int, weight: int, sprite: str, stats: Stats):
-        self.poke_id = Entry(poke_id)
+    def __init__(self, poke_id: int, name: str, height: int, weight: int, sprite: str, stats: Stats[Entry]):
+        self.poke_id = Entry('poke_id', poke_id)
         self.name = name.capitalize()
-        self.height = Entry(height)
-        self.weight = Entry(weight)
+        self.height = Entry('height', height)
+        self.weight = Entry('weight', weight)
         self.sprite = get_sprite(sprite)
         self.stats = stats
         self.str_repr = self.determine_str_repr()
