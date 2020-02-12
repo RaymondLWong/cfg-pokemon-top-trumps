@@ -50,10 +50,7 @@ class Sprite:
         self.show_avatar = show_avatar
 
     def __repr__(self):
-        if self.show_avatar:
-            return self.ascii_art
-        else:
-            return '[ AVATAR HIDDEN ]'
+        return self.ascii_art if self.show_avatar else None
 
 
 class Entry:
@@ -123,7 +120,7 @@ class Pokemon(PrettyClass):
         sorted_props.update({'name': f'{Fore.CYAN}{self.name}{Style.RESET_ALL}'})
         sorted_props.update({'height': self.height})
         sorted_props.update({'weight': self.weight})
-        all_props = f'\n{self.sprite}\n'
+        all_props = f'\n{self.sprite}\n' if self.sprite else ''
         all_props += format_as_table(sorted_props)
         all_props += self.stats.__str__()
         return all_props

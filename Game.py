@@ -53,16 +53,24 @@ class Game:
         user_pokemon = get_random_pokemon(self.generation)
         print(f'You drew {highlight(user_pokemon.name)}!')
         pp.pprint(user_pokemon)
-        (name, entry) = self.prompt_user_for_stat(user_pokemon)
-        stat_highlighted = highlight(name, Fore.YELLOW)
-        print(f'You choose {stat_highlighted} with a value of {highlight(entry.value, Fore.YELLOW)}')
+        (stat_name, user_chosen_pokemon_stat) = self.prompt_user_for_stat(user_pokemon)
+        stat_highlighted = highlight(stat_name, Fore.YELLOW)
+        announce_user_stat = 'You choose {} with a value of {}'.format(
+            stat_highlighted,
+            highlight(user_chosen_pokemon_stat.value, Fore.YELLOW)
+        )
+        print(announce_user_stat)
         enemy_pokemon = get_random_pokemon(self.generation)
         pp.pprint(enemy_pokemon)
         enemy_option = random.randrange(1, enemy_pokemon.option_count)
         enemy_stat = find_entry(enemy_option, vars(enemy_pokemon))[1]
-        print(
-            f'Enemy {highlight(enemy_pokemon.name, Fore.RED)} has a {stat_highlighted} of {highlight(enemy_stat, Fore.YELLOW)}')
-        result = self.do_battle(entry.shortcut, user_pokemon, enemy_pokemon)
+        announce_enemy_stat = 'Enemy {} has a {} of {}'.format(
+            highlight(enemy_pokemon.name, Fore.RED),
+            stat_highlighted,
+            highlight(enemy_stat, Fore.YELLOW)
+        )
+        print(announce_enemy_stat)
+        result = self.do_battle(user_chosen_pokemon_stat.shortcut, user_pokemon, enemy_pokemon)
         self.declare_winner(result)
 
     def prompt_user_for_stat(self, user_pokemon: Pokemon) -> (str, Entry):
