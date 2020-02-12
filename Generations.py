@@ -1,9 +1,6 @@
-import pokebase as pb
 from random import randrange
-from typing import Mapping, List, Tuple
-
+from typing import Mapping, List
 from Card import Pokemon, create_pokemon
-from Utils import grass, fire, water
 
 
 def get_static_generation_counts() -> Mapping[int, int]:
@@ -76,15 +73,7 @@ def get_static_generations_and_starters() -> dict:
     return starters
 
 
-def get_coloured_starters(starter_pokemon: Tuple[str, str, str]) -> str:
-    grass_starter = grass(starter_pokemon[0])
-    fire_starter = fire(starter_pokemon[1])
-    water_starter = water(starter_pokemon[2])
-
-    return '{}, {}, {}'.format(grass_starter, fire_starter, water_starter)
-
-
-def get_available_generations() -> List[str]:
+def get_available_generations() -> List[dict]:
     generations_and_starters = get_static_generations_and_starters()
     available_generations = []
     for gen_no, gen in generations_and_starters.items():
@@ -92,7 +81,11 @@ def get_available_generations() -> List[str]:
         gen_name_and_starters = 'Gen {}: {} (starters: {})'.format(
             gen_no,
             game_names[0],
-            get_coloured_starters(gen['starters'])
+            ', '.join(gen['starters'])
         )
-        available_generations.append(gen_name_and_starters)
+        available_generations.append({
+            'name': gen_name_and_starters,
+            'value': gen_no,
+            'shortcut_key': gen_no
+        })
     return available_generations

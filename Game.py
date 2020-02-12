@@ -1,11 +1,12 @@
 import random
 import pprint as pp
-from PyInquirer import prompt, print_json
+import questionary
 from enum import Enum
 from colorama import Fore
 from Card import Entry, Stats, Pokemon
 from Generations import get_random_pokemon, get_available_generations
 from Utils import highlight
+from prompt_toolkit.styles import Style
 
 
 class BattleResult(Enum):
@@ -109,18 +110,19 @@ class Game:
 
 
 def prompt_user_for_generation() -> int:
-    questions = [
-        {
-            'type': 'list',
-            'name': 'user_chosen_generation',
-            'message': 'Choose a generation to pick Pokemon from:',
-            'choices': get_available_generations()
-        }
-    ]
-    user_picked_gen = prompt(questions)
-    print_json(user_picked_gen)
+    custom_styling = Style([
+        ('highlighted', 'fg:cyan'),
+        ('pointer', 'bold')
+    ])
+    a = questionary.select(
+        message='Choose a generation to pick Pokemon from:',
+        choices=get_available_generations(),
+        style=custom_styling,
+        qmark='⭐'
+    ).ask()
 
-    return 1
+    print(f'answer: {a}')
+    return a
 
 
 new_game = Game()
