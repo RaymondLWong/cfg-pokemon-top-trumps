@@ -1,9 +1,10 @@
-import pprint as pp
 import random
+import pprint as pp
+from PyInquirer import prompt, print_json
 from enum import Enum
-
 from colorama import Fore, Style
-from Card import get_static_generation_counts, get_random_pokemon, Entry, Stats, Pokemon
+from Card import Entry, Stats, Pokemon
+from Generations import get_random_pokemon, get_static_generation_counts
 
 
 class BattleResult(Enum):
@@ -111,7 +112,17 @@ class Game:
 
 def prompt_user_for_generation() -> int:
     generation_count = len(get_static_generation_counts())
-    user_picked_gen = input(f'Pick a generation between 1-{generation_count}: ')
+    user_picked_gen = input()
+    questions = [
+        {
+            'type': 'list',
+            'name': 'user_chosen_generation',
+            'message': 'Choose a generation to pick Pokemon from:',
+            'choices': [f'Generation {gen}' for gen in range(1, generation_count)]
+        }
+    ]
+    answers = prompt(questions)
+    print_json(answers)
     try:
         gen = int(user_picked_gen)
         print(f'You chose Generation {gen}!')
