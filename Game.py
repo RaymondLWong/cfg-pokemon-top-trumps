@@ -100,13 +100,13 @@ class Game:
     def declare_winner(self, result: BattleResult):
         if result == BattleResult.WIN:
             self.wins += 1
-            print(f"You {highlight('WIN', Fore.GREEN)}!")
+            print('You {}!'.format(highlight('WIN', Fore.GREEN)))
         elif result == BattleResult.LOSE:
             self.loses += 1
-            print(f"You {highlight('LOSE', Fore.RED)}!")
+            print('You {}!'.format(highlight('LOSE', Fore.RED)))
         else:
             self.draws += 1
-            print(f"You {highlight('DRAW', Fore.YELLOW)}!")
+            print('You {}!'.format(highlight('DRAW', Fore.YELLOW)))
 
 
 def prompt_user_for_generation() -> int:
