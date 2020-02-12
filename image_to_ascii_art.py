@@ -3,7 +3,7 @@ import io
 from PIL import Image
 
 
-def image_to_ascii_art(img_data, output_width=120):
+def image_to_ascii_art(img_data, output_width=60):
     img = Image.open(io.BytesIO(img_data))
 
     # resize the image
