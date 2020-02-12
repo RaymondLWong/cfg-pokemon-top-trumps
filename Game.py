@@ -4,7 +4,7 @@ from PyInquirer import prompt, print_json
 from enum import Enum
 from colorama import Fore, Style
 from Card import Entry, Stats, Pokemon
-from Generations import get_random_pokemon, get_static_generation_counts
+from Generations import get_random_pokemon, get_static_generation_counts, get_starter_pokemon_names
 
 
 class BattleResult(Enum):
@@ -63,6 +63,7 @@ class Game:
         print(announce_user_stat)
         enemy_pokemon = get_random_pokemon(self.generation)
         pp.pprint(enemy_pokemon)
+        # FIXME: should only pick enemy stat when it's their turn
         enemy_option = random.randrange(1, enemy_pokemon.option_count)
         enemy_stat = find_entry(enemy_option, vars(enemy_pokemon))[1]
         announce_enemy_stat = 'Enemy {} has a {} of {}'.format(
@@ -112,27 +113,25 @@ class Game:
 
 def prompt_user_for_generation() -> int:
     generation_count = len(get_static_generation_counts())
-    user_picked_gen = input()
+
+    available_generations = []
+    for gen in range(1, generation_count + 1):
+        starters = ', '.join(get_starter_pokemon_names(gen))
+        available_generations.append('Generation {} ({})'.format(gen, starters))
+
     questions = [
         {
             'type': 'list',
             'name': 'user_chosen_generation',
             'message': 'Choose a generation to pick Pokemon from:',
-            'choices': [f'Generation {gen}' for gen in range(1, generation_count)]
+            'choices': available_generations
         }
     ]
-    answers = prompt(questions)
-    print_json(answers)
-    try:
-        gen = int(user_picked_gen)
-        print(f'You chose Generation {gen}!')
-        if gen not in get_static_generation_counts():
-            print(f'Generation {gen} is not supported. Defaulting to Gen 1.')
-            gen = 1
-        return gen
-    except ValueError:
-        print('Defaulting to Generation 1...')
-        return 1
+    print(available_generations)
+    user_picked_gen = prompt(questions)
+    print_json(user_picked_gen)
+
+    return 1
 
 
 new_game = Game()
