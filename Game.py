@@ -2,9 +2,10 @@ import random
 import pprint as pp
 from PyInquirer import prompt, print_json
 from enum import Enum
-from colorama import Fore, Style
+from colorama import Fore
 from Card import Entry, Stats, Pokemon
-from Generations import get_random_pokemon, get_static_generation_counts, get_starter_pokemon_names
+from Generations import get_random_pokemon, get_available_generations
+from Utils import highlight
 
 
 class BattleResult(Enum):
@@ -19,10 +20,6 @@ def find_entry(option: int, entries: dict) -> (str, Entry):
             return find_entry(option, vars(entry))
         elif isinstance(entry, Entry) and entry.shortcut == option:
             return name, entry
-
-
-def highlight(string: str, colour: Fore = Fore.CYAN) -> str:
-    return f'{colour}{string}{Style.RESET_ALL}'
 
 
 class Game:
@@ -112,22 +109,14 @@ class Game:
 
 
 def prompt_user_for_generation() -> int:
-    generation_count = len(get_static_generation_counts())
-
-    available_generations = []
-    for gen in range(1, generation_count + 1):
-        starters = ', '.join(get_starter_pokemon_names(gen))
-        available_generations.append('Generation {} ({})'.format(gen, starters))
-
     questions = [
         {
             'type': 'list',
             'name': 'user_chosen_generation',
             'message': 'Choose a generation to pick Pokemon from:',
-            'choices': available_generations
+            'choices': get_available_generations()
         }
     ]
-    print(available_generations)
     user_picked_gen = prompt(questions)
     print_json(user_picked_gen)
 
