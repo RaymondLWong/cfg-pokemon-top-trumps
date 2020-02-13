@@ -62,7 +62,7 @@ def get_static_generations_and_starters() -> dict:
             'starters': ['Snivy', 'Tepig', 'Oshawott']
         },
         6: {
-            'icons': ['✖️', '🇾'],  # 🆈 ץ ㄚ ¥ ⓨ
+            'icons': ['✖️', '🆈'],  # 🇾 🆈 ץ ㄚ ¥ ⓨ
             'names': ['X', 'Y'],
             'starters': ['Chespin', 'Fennekin', 'Froakie']
         },
@@ -97,10 +97,11 @@ def get_available_generations() -> List[dict]:
     generations_and_starters = get_static_generations_and_starters()
     available_generations = []
     for gen_no, gen in generations_and_starters.items():
-        game_names = [', '.join(gen['names'])]
-        gen_name_and_starters = 'Gen {}: {:<27} (starters: {})'.format(
+        game_names = ', '.join(gen['names'])
+        # icons = ' '.join(gen['icons'])  # icons mess up alignment :(
+        gen_name_and_starters = 'Gen {}: {:<25} (starters: {:<})'.format(
             gen_no,
-            game_names[0],
+            game_names,
             get_starters_as_str(gen['starters'])
         )
         available_generations.append({
