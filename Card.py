@@ -13,14 +13,14 @@ T = TypeVar('T')
 
 
 def get_available_props(dictionary: dict) -> dict:
-    copy = {}
+    dict_copy = {}
     for key, value in dictionary.items():
         if isinstance(value, Entry):
             if value.value is not None:
-                copy.update({key: value})
+                dict_copy.update({key: value})
         elif value is not None:
-            copy.update({key: value})
-    return copy
+            dict_copy.update({key: value})
+    return dict_copy
 
 
 def format_as_table(dictionary: dict, columns: int = 2, label_offset: int = 0) -> str:
@@ -110,7 +110,6 @@ class Pokemon(PrettyClass):
         self.sprite = get_sprite(sprite)
         self.stats = stats
         self.str_repr = self.determine_str_repr()
-        self.option_count = len(self.get_available_battle_stats())
 
     def determine_str_repr(self) -> str:
         sorted_props = {}
@@ -131,8 +130,7 @@ class Pokemon(PrettyClass):
             'poke_id': self.poke_id,
             'name': self.name,
             'height': self.height,
-            'weight': self.weight,
-            'option_count': self.option_count
+            'weight': self.weight
         }
         return itertools.chain(base_info, self.stats)
 
@@ -144,14 +142,20 @@ class Pokemon(PrettyClass):
 
     def get_available_battle_stats(self) -> List[str]:
         battle_stats = []
-        available_stats = dict(vars(self))  # make a copy, instead of mutating
-        for key, entry in available_stats.items():
-            if isinstance(entry, Entry) or isinstance(entry, Stats):
-                if isinstance(entry, Stats):
-                    battle_stats.extend(vars(entry))
-                else:
-                    battle_stats.append(key)
-        return battle_stats
+        all_stats = dict(vars(self))  # make a copy, instead of mutating
+        for entry in all_stats.values():
+            if isinstance(entry, Entry):
+                battle_stats.append(entry)
+            elif isinstance(entry, Stats):
+                for stat in vars(entry).values():
+                    battle_stats.append(stat)
+
+        available_stats = []
+        # filter empty stats
+        for entry in battle_stats:
+            if entry.value:
+                available_stats.append(entry.name)
+        return available_stats
 
 
 def flatten_stats(stats):

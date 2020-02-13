@@ -1,4 +1,5 @@
 import pprint as pp
+import random
 from random import randrange
 from typing import List
 
@@ -51,7 +52,7 @@ class Game:
         while user_wants_to_battle:
             self.commence_battle()
             user_wants_to_battle = self.prompt_continue()
-        self.show_score()
+        self.show_final_score()
 
     def get_turn_player_str(self, turn_player: Turn) -> str:
         if turn_player == Turn.user:
@@ -61,7 +62,7 @@ class Game:
 
     def choose_turn_player(self, user_choice: CoinToss) -> Turn:
         print('Tossing coin... ', end='')
-        coin_toss: CoinToss = randrange(0, 2)
+        coin_toss: CoinToss = random.choice([CoinToss.heads, CoinToss.tails])
         if user_choice:
             turn_player = Turn.user if coin_toss == user_choice else Turn.opponent
         else:
@@ -71,8 +72,10 @@ class Game:
         return turn_player
 
     def prompt_continue(self) -> bool:
+        win_rate = 100 * (self.wins / self.battles)
+        stats = '{:.2f}% win rate, {} total battles'.format(win_rate, self.battles)
         return questionary.select(
-            message='Battle again?',
+            message=f'Battle again? ({stats})',
             choices=[
                 Choice(title='Yes', value=True),
                 Choice(title='No', value=False)
@@ -81,7 +84,7 @@ class Game:
             qmark='→'
         ).ask()
 
-    def show_score(self):
+    def show_final_score(self):
         win_count = green(f'{self.wins} wins')
         lose_count = red(f'{self.loses} loses')
         draw_count = yellow(f'{self.draws} draws')
@@ -127,8 +130,8 @@ class Game:
         ).ask()
 
     def choose_stat_for_opponent(self, opponent_pokemon: Pokemon) -> Entry:
-        random_number = randrange(1, opponent_pokemon.option_count)
-        random_stat = opponent_pokemon.get_available_battle_stats().__getitem__(random_number)
+        available_stats = opponent_pokemon.get_available_battle_stats()
+        random_stat = random.choice(available_stats)
         print(f'random stat {random_stat} chosen')
         return opponent_pokemon[random_stat]
 
