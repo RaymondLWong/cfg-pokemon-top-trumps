@@ -37,34 +37,42 @@ def get_random_pokemon(gen: int) -> Pokemon:
 def get_static_generations_and_starters() -> dict:
     starters = {
         1: {
+            'icons': ['🟥', '🟩', '🟦'],
             'names': ['Red', 'Green', 'Blue'],
             'starters': ['Bulbasaur', 'Charmander', 'Squirtle']
         },
         2: {
+            'icons': ['🏅', '🥈', '💎'],
             'names': ['Gold', 'Silver', 'Crystal'],
             'starters': ['Chikorita', 'Cyndaquil', 'Totodile']
         },
         3: {
+            'icons': ['♦️', '🔷', '❇️️'],  # ✳️☘️
             'names': ['Ruby', 'Sapphire', 'Emerald'],
             'starters': ['Treecko', 'Torchic', 'Mudkip']
         },
         4: {
+            'icons': ['🔶', '⚪', '⛓️'],
             'names': ['Diamond', 'Pearl', 'Platinum'],
             'starters': ['Turtwig', 'Chimchar', 'Piplup']
         },
         5: {
+            'icons': ['🏴', '🏳️'],
             'names': ['Black', 'White'],
             'starters': ['Snivy', 'Tepig', 'Oshawott']
         },
         6: {
+            'icons': ['✖️', '🇾'],  # 🆈 ץ ㄚ ¥ ⓨ
             'names': ['X', 'Y'],
             'starters': ['Chespin', 'Fennekin', 'Froakie']
         },
         7: {
+            'icons': ['☀️', '🌙'],
             'names': ['Sun', 'Moon'],
             'starters': ['Rowlet', 'Litten', 'Popplio']
         },
         8: {
+            'icons': ['⚔️', '️🛡️'],
             'names': ['Sword', 'Shield'],
             'starters': ['Grookey', 'Scorbunny', 'Sobble']
         }
