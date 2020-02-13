@@ -98,8 +98,7 @@ class Game:
         # pp.pprint(user_pokemon)
         enemy_pokemon = get_random_pokemon(self.generation)
 
-        # turn_player = self.choose_turn_player(CoinToss.heads)
-        turn_player = Turn.user
+        turn_player = self.choose_turn_player(CoinToss.heads)
 
         if turn_player == Turn.user:
             turn_player_chosen_stat = self.prompt_user_for_stat(user_pokemon)
