@@ -35,7 +35,6 @@ def get_random_pokemon(gen: int) -> Pokemon:
 
 
 def get_static_generations_and_starters() -> dict:
-    # types are always (grass, fire, water)
     starters = {
         1: {
             'names': ['Red', 'Green', 'Blue'],
@@ -73,6 +72,11 @@ def get_static_generations_and_starters() -> dict:
     return starters
 
 
+def get_starters_as_str(starters: [str, str, str]) -> str:
+    # types are always (grass, fire, water)
+    return '🌱{}🌱, 🔥{}🔥, 💧{}💧'.format(starters[0], starters[1], starters[2])
+
+
 def get_available_generations() -> List[dict]:
     generations_and_starters = get_static_generations_and_starters()
     available_generations = []
@@ -81,7 +85,7 @@ def get_available_generations() -> List[dict]:
         gen_name_and_starters = 'Gen {}: {} (starters: {})'.format(
             gen_no,
             game_names[0],
-            ', '.join(gen['starters'])
+            get_starters_as_str(gen['starters'])
         )
         available_generations.append({
             'name': gen_name_and_starters,

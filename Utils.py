@@ -24,10 +24,6 @@ def yellow(string: str) -> str:
     return highlight(string, Fore.YELLOW)
 
 
-def create_choice(entry: Entry, align=True) -> Choice:
-    if align:
-        aligned_title = '{:<3} {:<15}'.format(entry.name, str(entry.value))
-        return Choice(title=aligned_title, value=entry)
-    else:
-        title = '{} ({})'.format(entry.name, str(entry.value))
-        return Choice(title=title, value=entry)
+def create_choice(entry: Entry) -> Choice:
+    aligned_title = '{:<15} {:<3}'.format(entry.name, str(entry.value))
+    return Choice(title=aligned_title, value=entry)

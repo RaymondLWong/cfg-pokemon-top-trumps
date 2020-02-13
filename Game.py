@@ -98,7 +98,8 @@ class Game:
         # pp.pprint(user_pokemon)
         enemy_pokemon = get_random_pokemon(self.generation)
 
-        turn_player = self.choose_turn_player(CoinToss.heads)
+        # turn_player = self.choose_turn_player(CoinToss.heads)
+        turn_player = Turn.user
 
         if turn_player == Turn.user:
             turn_player_chosen_stat = self.prompt_user_for_stat(user_pokemon)
@@ -111,26 +112,17 @@ class Game:
         result = self.do_battle(turn_player_chosen_stat, user_pokemon, enemy_pokemon)
         self.declare_winner(result)
 
-    def get_stats_from_pokemon(self, pokemon: Pokemon) -> List[Choice]:
-        choices = [
-            create_choice(pokemon.poke_id),
-            create_choice(pokemon.height),
-            create_choice(pokemon.weight)
-        ]
-        for stat in pokemon.stats.values():
-            choices.append(create_choice(stat))
-        return choices
-
     def prompt_user_for_stat(self, user_pokemon: Pokemon) -> Entry:
+        choices = list(map(lambda stat: create_choice(stat), user_pokemon.get_available_battle_stats(False)))
         return questionary.select(
             message=f'Choose a stat from {user_pokemon.name} to compete with:',
-            choices=self.get_stats_from_pokemon(user_pokemon),
+            choices=choices,
             style=self.custom_styling,
             qmark='💪'
         ).ask()
 
     def choose_stat_for_opponent(self, opponent_pokemon: Pokemon) -> Entry:
-        available_stats = opponent_pokemon.get_available_battle_stats()
+        available_stats = opponent_pokemon.get_available_battle_stats(True)
         random_stat = random.choice(available_stats)
         print(f'random stat {random_stat} chosen')
         return opponent_pokemon[random_stat]

@@ -7,7 +7,7 @@ import pprint as pp
 import pokebase as pb
 from image_to_ascii_art import image_to_ascii_art
 from colorama import Fore, Style
-from typing import Generic, TypeVar, List
+from typing import Generic, TypeVar, List, Union
 
 T = TypeVar('T')
 
@@ -140,7 +140,7 @@ class Pokemon(PrettyClass):
             p[stat_name] = stat
         return p[item]
 
-    def get_available_battle_stats(self) -> List[str]:
+    def get_available_battle_stats(self, as_string: bool) -> List[Union[str, Entry]]:
         battle_stats = []
         all_stats = dict(vars(self))  # make a copy, instead of mutating
         for entry in all_stats.values():
@@ -154,7 +154,7 @@ class Pokemon(PrettyClass):
         # filter empty stats
         for entry in battle_stats:
             if entry.value:
-                available_stats.append(entry.name)
+                available_stats.append(entry.name if as_string else entry)
         return available_stats
 
 
