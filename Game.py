@@ -46,9 +46,16 @@ class Game:
             user_wants_to_battle = self.prompt_continue()
         self.show_score()
 
-    def prompt_continue(self):
-        battle_again = input(f'Do you want to battle again? (y/n) ')
-        return battle_again != 'n'
+    def prompt_continue(self) -> bool:
+        return questionary.select(
+            message='Battle again?',
+            choices=[
+                Choice(title='Yes', value=True),
+                Choice(title='No', value=False)
+            ],
+            style=self.custom_styling,
+            qmark='→'
+        ).ask()
 
     def show_score(self):
         win_count = highlight(f'{self.wins} wins', Fore.GREEN)
