@@ -146,12 +146,22 @@ class Game:
 
     def announce_chosen_stat(self, turn_player: Turn, stat: Entry):
         announce_turn_player = self.get_turn_player_str(turn_player)
-        print('{} chose {}'.format(announce_turn_player, yellow(stat.name)))
+        print('{} chose {}!'.format(announce_turn_player, yellow(stat.name)))
 
-    def do_battle(self, choice: Entry, user_pokemon: Pokemon, enemy_pokemon: Pokemon) -> BattleResult:
+    def do_battle(self, stat_choice: Entry, user_pokemon: Pokemon, enemy_pokemon: Pokemon) -> BattleResult:
         self.battles += 1
-        user_pokemon_stat = get_entry(choice.name, user_pokemon).value
-        enemy_pokemon_stat = get_entry(choice.name, enemy_pokemon).value
+        user_pokemon_stat = get_entry(stat_choice.name, user_pokemon).value
+        enemy_pokemon_stat = get_entry(stat_choice.name, enemy_pokemon).value
+
+        summary = 'Your {} has {} {}. Enemy {} has {} {}...'.format(
+            blue(user_pokemon.name),
+            yellow(user_pokemon_stat),
+            yellow(stat_choice.name),
+            red(enemy_pokemon.name),
+            yellow(enemy_pokemon_stat),
+            yellow(stat_choice.name)
+        )
+        print(summary)
 
         if user_pokemon_stat > enemy_pokemon_stat:
             return BattleResult.win
