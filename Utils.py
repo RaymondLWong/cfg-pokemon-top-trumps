@@ -8,6 +8,22 @@ def highlight(string: str, colour: Fore = Fore.CYAN) -> str:
     return f'{colour}{string}{Style.RESET_ALL}'
 
 
+def red(string: str) -> str:
+    return highlight(string, Fore.RED)
+
+
+def green(string: str) -> str:
+    return highlight(string, Fore.GREEN)
+
+
+def blue(string: str) -> str:
+    return highlight(string, Fore.CYAN)
+
+
+def yellow(string: str) -> str:
+    return highlight(string, Fore.YELLOW)
+
+
 def create_choice(entry: Entry, align=True) -> Choice:
     if align:
         aligned_title = '{:<3} {:<15}'.format(entry.name, str(entry.value))

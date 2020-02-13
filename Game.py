@@ -4,12 +4,11 @@ from typing import List
 
 import questionary
 from enum import Enum
-from colorama import Fore
 from questionary import Choice
 
-from Card import Entry, Stats, Pokemon
+from Card import Entry, Pokemon
 from Generations import get_random_pokemon, get_available_generations
-from Utils import highlight, create_choice
+from Utils import create_choice, green, red, yellow, blue
 from prompt_toolkit.styles import Style
 
 
@@ -69,9 +68,9 @@ class Game:
 
     def get_turn_player_str(self, turn_player: Turn) -> str:
         if turn_player == Turn.user:
-            return highlight('YOU', Fore.GREEN)
+            return green('YOU')
         else:
-            return 'Your {}'.format(highlight('OPPONENT', Fore.RED))
+            return 'Your {}'.format(red('OPPONENT'))
 
     def choose_turn_player(self, user_choice: CoinToss) -> Turn:
         print('Tossing coin... ', end='')
@@ -81,7 +80,7 @@ class Game:
         else:
             turn_player = Turn.user if coin_toss == CoinToss.heads else Turn.opponent
         coin_toss_str = 'HEADS' if coin_toss == CoinToss.heads else 'TAILS'
-        print('{}! {} goes first!'.format(coin_toss_str, self.get_turn_player_str(turn_player)))
+        print('{}! {} goes first!'.format(yellow(coin_toss_str), self.get_turn_player_str(turn_player)))
         return turn_player
 
     def prompt_continue(self) -> bool:
@@ -96,16 +95,16 @@ class Game:
         ).ask()
 
     def show_score(self):
-        win_count = highlight(f'{self.wins} wins', Fore.GREEN)
-        lose_count = highlight(f'{self.loses} loses', Fore.RED)
-        draw_count = highlight(f'{self.draws} draws', Fore.YELLOW)
-        total = highlight(f'{self.battles} total', Fore.CYAN)
+        win_count = green(f'{self.wins} wins')
+        lose_count = red(f'{self.loses} loses')
+        draw_count = yellow(f'{self.draws} draws')
+        total = blue(f'{self.battles} total')
         print(f'Your score: {win_count}, {lose_count}, {draw_count} ({total})')
 
     def commence_battle(self):
         # choose pokemon for user and opponent
         user_pokemon = get_random_pokemon(self.generation)
-        print(f'You drew {highlight(user_pokemon.name)}!')
+        print(f'You drew {blue(user_pokemon.name)}!')
         # pp.pprint(user_pokemon)
         enemy_pokemon = get_random_pokemon(self.generation)
 
@@ -147,7 +146,7 @@ class Game:
 
     def announce_chosen_stat(self, turn_player: Turn, stat: Entry):
         announce_turn_player = self.get_turn_player_str(turn_player)
-        print('{} chose {}'.format(announce_turn_player, highlight(stat.name, Fore.YELLOW)))
+        print('{} chose {}'.format(announce_turn_player, yellow(stat.name)))
 
     def do_battle(self, choice: Entry, user_pokemon: Pokemon, enemy_pokemon: Pokemon) -> BattleResult:
         self.battles += 1
@@ -164,13 +163,13 @@ class Game:
     def declare_winner(self, result: BattleResult):
         if result == BattleResult.win:
             self.wins += 1
-            print('You {}!'.format(highlight('WIN', Fore.GREEN)))
+            print('You {}!'.format(green('WIN')))
         elif result == BattleResult.lose:
             self.loses += 1
-            print('You {}!'.format(highlight('LOSE', Fore.RED)))
+            print('You {}!'.format(red('LOSE')))
         else:
             self.draws += 1
-            print('You {}!'.format(highlight('DRAW', Fore.YELLOW)))
+            print('You {}!'.format(yellow('DRAW')))
 
     def prompt_user_for_generation(self) -> int:
         return questionary.select(

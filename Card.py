@@ -7,7 +7,7 @@ import pprint as pp
 import pokebase as pb
 from image_to_ascii_art import image_to_ascii_art
 from colorama import Fore, Style
-from typing import Generic, TypeVar, Mapping, List
+from typing import Generic, TypeVar, List
 
 T = TypeVar('T')
 
