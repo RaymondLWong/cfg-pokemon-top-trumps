@@ -85,7 +85,7 @@ class Stats(PrettyClass, Generic[T]):
         self.defence = Entry('defence', defence)
         self.special_attack = Entry('special_attack', special_attack)
         self.special_defence = Entry('special_defence', special_defence)
-        self.speed = Entry('speed ', speed)
+        self.speed = Entry('speed', speed)
         self.accuracy = Entry('accuracy', accuracy)
         self.evasion = Entry('evasion', evasion)
 
@@ -140,7 +140,7 @@ class Pokemon(PrettyClass):
         p = vars(copy(self))
         for stat_name, stat in vars(p['stats']).items():
             p[stat_name] = stat
-        return p
+        return p[item]
 
     def get_available_battle_stats(self) -> List[str]:
         battle_stats = []

@@ -33,19 +33,6 @@ class GameMode(Enum):
     versus_bot = 2
 
 
-class EntryNotFoundError(RuntimeError):
-    pass
-
-
-def get_entry(entry_name: str, pokemon: Pokemon) -> Entry:
-    if isinstance(pokemon[entry_name], Entry):
-        return pokemon[entry_name]
-    elif isinstance(pokemon['stats'][entry_name], Entry):
-        return pokemon['stats'][entry_name]
-    else:
-        raise EntryNotFoundError()
-
-
 class Game:
     custom_styling = Style([
         ('highlighted', 'fg:cyan'),
@@ -74,7 +61,7 @@ class Game:
 
     def choose_turn_player(self, user_choice: CoinToss) -> Turn:
         print('Tossing coin... ', end='')
-        coin_toss: CoinToss = randrange(0, 1)
+        coin_toss: CoinToss = randrange(0, 2)
         if user_choice:
             turn_player = Turn.user if coin_toss == user_choice else Turn.opponent
         else:
@@ -142,7 +129,8 @@ class Game:
     def choose_stat_for_opponent(self, opponent_pokemon: Pokemon) -> Entry:
         random_number = randrange(1, opponent_pokemon.option_count)
         random_stat = opponent_pokemon.get_available_battle_stats().__getitem__(random_number)
-        return get_entry(random_stat, opponent_pokemon)
+        print(f'random stat {random_stat} chosen')
+        return opponent_pokemon[random_stat]
 
     def announce_chosen_stat(self, turn_player: Turn, stat: Entry):
         announce_turn_player = self.get_turn_player_str(turn_player)
@@ -150,16 +138,17 @@ class Game:
 
     def do_battle(self, stat_choice: Entry, user_pokemon: Pokemon, enemy_pokemon: Pokemon) -> BattleResult:
         self.battles += 1
-        user_pokemon_stat = get_entry(stat_choice.name, user_pokemon).value
-        enemy_pokemon_stat = get_entry(stat_choice.name, enemy_pokemon).value
+        stat_name = stat_choice.name
+        user_pokemon_stat = user_pokemon[stat_name].value
+        enemy_pokemon_stat = enemy_pokemon[stat_name].value
 
         summary = 'Your {} has {} {}. Enemy {} has {} {}...'.format(
             blue(user_pokemon.name),
             yellow(user_pokemon_stat),
-            yellow(stat_choice.name),
+            yellow(stat_name),
             red(enemy_pokemon.name),
             yellow(enemy_pokemon_stat),
-            yellow(stat_choice.name)
+            yellow(stat_name)
         )
         print(summary)
 
