@@ -72,9 +72,17 @@ def get_static_generations_and_starters() -> dict:
     return starters
 
 
+def fancy_starter(text: str, wrapper: str) -> str:
+    return '{} {:<10}'.format(wrapper, text, wrapper)
+
+
 def get_starters_as_str(starters: [str, str, str]) -> str:
     # types are always (grass, fire, water)
-    return '🌱{}🌱, 🔥{}🔥, 💧{}💧'.format(starters[0], starters[1], starters[2])
+    return ' '.join([
+        fancy_starter(starters[0], '🌱'),
+        fancy_starter(starters[1], '🔥'),
+        fancy_starter(starters[2], '💧')
+    ])
 
 
 def get_available_generations() -> List[dict]:
@@ -82,7 +90,7 @@ def get_available_generations() -> List[dict]:
     available_generations = []
     for gen_no, gen in generations_and_starters.items():
         game_names = [', '.join(gen['names'])]
-        gen_name_and_starters = 'Gen {}: {} (starters: {})'.format(
+        gen_name_and_starters = 'Gen {}: {:<27} (starters: {})'.format(
             gen_no,
             game_names[0],
             get_starters_as_str(gen['starters'])
