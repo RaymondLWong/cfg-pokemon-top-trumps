@@ -1,5 +1,5 @@
-import random
 import pprint as pp
+from random import randrange
 from typing import List
 
 import questionary
@@ -14,17 +14,37 @@ from prompt_toolkit.styles import Style
 
 
 class BattleResult(Enum):
-    WIN = 1
-    DRAW = 0
-    LOSE = -1
+    win = 1
+    draw = 0
+    lose = -1
 
 
-def find_entry(option: int, entries: dict) -> (str, Entry):
-    for name, entry in entries.items():
-        if isinstance(entry, Stats):
-            return find_entry(option, vars(entry))
-        elif isinstance(entry, Entry) and entry.shortcut == option:
-            return name, entry
+class Turn(Enum):
+    user = 1,
+    opponent = 2
+
+
+class CoinToss(Enum):
+    heads = 1,
+    tails = 0
+
+
+class GameMode(Enum):
+    single_match = 1,
+    versus_bot = 2
+
+
+class EntryNotFoundError(RuntimeError):
+    pass
+
+
+def get_entry(entry_name: str, pokemon: Pokemon) -> Entry:
+    if isinstance(pokemon[entry_name], Entry):
+        return pokemon[entry_name]
+    elif isinstance(pokemon['stats'][entry_name], Entry):
+        return pokemon['stats'][entry_name]
+    else:
+        raise EntryNotFoundError()
 
 
 class Game:
@@ -33,18 +53,36 @@ class Game:
         ('pointer', 'bold')
     ])
 
+    battles = 0
+    wins = 0
+    draws = 0
+    loses = 0
+
     def __init__(self):
         self.generation = self.prompt_user_for_generation()
-        self.battles = 0
-        self.wins = 0
-        self.draws = 0
-        self.loses = 0
 
         user_wants_to_battle = True
         while user_wants_to_battle:
             self.commence_battle()
             user_wants_to_battle = self.prompt_continue()
         self.show_score()
+
+    def get_turn_player_str(self, turn_player: Turn) -> str:
+        if turn_player == Turn.user:
+            return highlight('YOU', Fore.GREEN)
+        else:
+            return 'Your {}'.format(highlight('OPPONENT', Fore.RED))
+
+    def choose_turn_player(self, user_choice: CoinToss) -> Turn:
+        print('Tossing coin... ', end='')
+        coin_toss: CoinToss = randrange(0, 1)
+        if user_choice:
+            turn_player = Turn.user if coin_toss == user_choice else Turn.opponent
+        else:
+            turn_player = Turn.user if coin_toss == CoinToss.heads else Turn.opponent
+        coin_toss_str = 'HEADS' if coin_toss == CoinToss.heads else 'TAILS'
+        print('{}! {} goes first!'.format(coin_toss_str, self.get_turn_player_str(turn_player)))
+        return turn_player
 
     def prompt_continue(self) -> bool:
         return questionary.select(
@@ -65,23 +103,23 @@ class Game:
         print(f'Your score: {win_count}, {lose_count}, {draw_count} ({total})')
 
     def commence_battle(self):
+        # choose pokemon for user and opponent
         user_pokemon = get_random_pokemon(self.generation)
         print(f'You drew {highlight(user_pokemon.name)}!')
-        pp.pprint(user_pokemon)
-        user_chosen_pokemon_stat = self.prompt_user_for_stat(user_pokemon)
-        stat_highlighted = highlight(user_chosen_pokemon_stat.name, Fore.YELLOW)
+        # pp.pprint(user_pokemon)
         enemy_pokemon = get_random_pokemon(self.generation)
-        pp.pprint(enemy_pokemon)
-        # FIXME: should only pick enemy stat when it's their turn
-        enemy_option = random.randrange(1, enemy_pokemon.option_count)
-        enemy_stat = find_entry(enemy_option, vars(enemy_pokemon))[1]
-        announce_enemy_stat = 'Enemy {} has a {} of {}'.format(
-            highlight(enemy_pokemon.name, Fore.RED),
-            stat_highlighted,
-            highlight(enemy_stat, Fore.YELLOW)
-        )
-        print(announce_enemy_stat)
-        result = self.do_battle(user_chosen_pokemon_stat.shortcut, user_pokemon, enemy_pokemon)
+
+        turn_player = self.choose_turn_player(CoinToss.heads)
+
+        if turn_player == Turn.user:
+            turn_player_chosen_stat = self.prompt_user_for_stat(user_pokemon)
+        else:
+            # pp.pprint(enemy_pokemon)
+            turn_player_chosen_stat = self.choose_stat_for_opponent(enemy_pokemon)
+
+        self.announce_chosen_stat(turn_player, turn_player_chosen_stat)
+
+        result = self.do_battle(turn_player_chosen_stat, user_pokemon, enemy_pokemon)
         self.declare_winner(result)
 
     def get_stats_from_pokemon(self, pokemon: Pokemon) -> List[Choice]:
@@ -90,7 +128,7 @@ class Game:
             create_choice(pokemon.height),
             create_choice(pokemon.weight)
         ]
-        for stat in vars(pokemon.stats).values():
+        for stat in pokemon.stats.values():
             choices.append(create_choice(stat))
         return choices
 
@@ -102,23 +140,32 @@ class Game:
             qmark='💪'
         ).ask()
 
-    def do_battle(self, choice: int, user_pokemon: Pokemon, enemy_pokemon: Pokemon) -> BattleResult:
+    def choose_stat_for_opponent(self, opponent_pokemon: Pokemon) -> Entry:
+        random_number = randrange(1, opponent_pokemon.option_count)
+        random_stat = opponent_pokemon.get_available_battle_stats().__getitem__(random_number)
+        return get_entry(random_stat, opponent_pokemon)
+
+    def announce_chosen_stat(self, turn_player: Turn, stat: Entry):
+        announce_turn_player = self.get_turn_player_str(turn_player)
+        print('{} chose {}'.format(announce_turn_player, highlight(stat.name, Fore.YELLOW)))
+
+    def do_battle(self, choice: Entry, user_pokemon: Pokemon, enemy_pokemon: Pokemon) -> BattleResult:
         self.battles += 1
-        user_pokemon_stat = find_entry(choice, vars(user_pokemon))[1].value
-        enemy_pokemon_stat = find_entry(choice, vars(enemy_pokemon))[1].value
+        user_pokemon_stat = get_entry(choice.name, user_pokemon).value
+        enemy_pokemon_stat = get_entry(choice.name, enemy_pokemon).value
 
         if user_pokemon_stat > enemy_pokemon_stat:
-            return BattleResult.WIN
+            return BattleResult.win
         elif user_pokemon_stat == enemy_pokemon_stat:
-            return BattleResult.DRAW
+            return BattleResult.draw
         else:
-            return BattleResult.LOSE
+            return BattleResult.lose
 
     def declare_winner(self, result: BattleResult):
-        if result == BattleResult.WIN:
+        if result == BattleResult.win:
             self.wins += 1
             print('You {}!'.format(highlight('WIN', Fore.GREEN)))
-        elif result == BattleResult.LOSE:
+        elif result == BattleResult.lose:
             self.loses += 1
             print('You {}!'.format(highlight('LOSE', Fore.RED)))
         else:

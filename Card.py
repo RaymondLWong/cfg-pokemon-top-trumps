@@ -1,10 +1,13 @@
+import itertools
 import math
+from copy import copy
+
 import requests
 import pprint as pp
 import pokebase as pb
 from image_to_ascii_art import image_to_ascii_art
 from colorama import Fore, Style
-from typing import Generic, TypeVar, Mapping
+from typing import Generic, TypeVar, Mapping, List
 
 T = TypeVar('T')
 
@@ -27,14 +30,12 @@ def format_as_table(dictionary: dict, columns: int = 2, label_offset: int = 0) -
     for index, (key, entry) in enumerate(dictionary.items()):
         col = index % columns
         entry_is_class = isinstance(entry, Entry)
-        shortcut = ''
         if entry_is_class and isinstance(entry.value, int):
             labels[col] += 1
             dictionary[key].shortcut = labels[col]
-            shortcut = f'( {entry.shortcut} )'
         value = entry.value if entry_is_class else entry
         end = '\n' if index % columns == 1 else ''
-        table += '{:<6} {:<17} {:<7}{}'.format(shortcut, key, value, end)
+        table += '{:<17} {:<7}{}'.format(key, value, end)
     return f'\n{table}'
 
 
@@ -65,14 +66,6 @@ class Entry:
 
     def __repr__(self):
         return pp.pformat(self.value)
-
-
-def get_max_entry(entries: Mapping[str, Entry]) -> int:
-    max_shortcut = 0
-    for entry in entries.values():
-        if entry.shortcut > max_shortcut:
-            max_shortcut = entry.shortcut
-    return max_shortcut
 
 
 class Stats(PrettyClass, Generic[T]):
@@ -117,7 +110,7 @@ class Pokemon(PrettyClass):
         self.sprite = get_sprite(sprite)
         self.stats = stats
         self.str_repr = self.determine_str_repr()
-        self.option_count = get_max_entry(vars(self.stats))
+        self.option_count = len(self.get_available_battle_stats())
 
     def determine_str_repr(self) -> str:
         sorted_props = {}
@@ -132,6 +125,33 @@ class Pokemon(PrettyClass):
 
     def __repr__(self):
         return self.str_repr
+
+    def __iter__(self):
+        base_info = {
+            'poke_id': self.poke_id,
+            'name': self.name,
+            'height': self.height,
+            'weight': self.weight,
+            'option_count': self.option_count
+        }
+        return itertools.chain(base_info, self.stats)
+
+    def __getitem__(self, item):
+        p = vars(copy(self))
+        for stat_name, stat in vars(p['stats']).items():
+            p[stat_name] = stat
+        return p
+
+    def get_available_battle_stats(self) -> List[str]:
+        battle_stats = []
+        available_stats = dict(vars(self))  # make a copy, instead of mutating
+        for key, entry in available_stats.items():
+            if isinstance(entry, Entry) or isinstance(entry, Stats):
+                if isinstance(entry, Stats):
+                    battle_stats.extend(vars(entry))
+                else:
+                    battle_stats.append(key)
+        return battle_stats
 
 
 def flatten_stats(stats):
