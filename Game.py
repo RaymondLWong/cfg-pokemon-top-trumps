@@ -1,5 +1,6 @@
 import pprint as pp
 import random
+from decimal import Decimal
 from typing import List, TypeVar
 
 import questionary
@@ -201,7 +202,11 @@ class Game:
 
     def prompt_continue(self) -> bool:
         win_rate = 100 * (self.wins / self.battle_count)
-        stats = '{:.2f}% win rate, {} total battles'.format(win_rate, self.battle_count)
+        if Decimal(win_rate) % 1 == 0:
+            win_rate = int(win_rate)
+        else:
+            win_rate = '{:.2f}'.format(win_rate)
+        stats = '{}% win rate, {} total battles'.format(win_rate, self.battle_count)
         return questionary.select(
             message=f'Battle again? ({stats})',
             choices=[
