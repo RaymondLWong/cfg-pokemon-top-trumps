@@ -81,7 +81,7 @@ def get_static_generations_and_starters() -> dict:
 
 
 def fancy_starter(text: str, wrapper: str) -> str:
-    return '{} {:<10}'.format(wrapper, text, wrapper)
+    return '{} {:<10}'.format(wrapper, text)
 
 
 def get_starters_as_str(starters: [str, str, str]) -> str:

@@ -31,7 +31,8 @@ class CoinToss(Enum):
 
 class GameMode(Enum):
     single_match = 1,
-    versus_bot = 2
+    versus_bot = 2,
+    vs_player = 3
 
 
 class Game:
@@ -46,13 +47,41 @@ class Game:
     loses = 0
 
     def __init__(self):
-        self.generation = self.prompt_user_for_generation()
+        game_mode = self.prompt_game_mode()
+
+        if game_mode == GameMode.single_match:
+            self.start_single_match()
+        elif game_mode == GameMode.versus_bot:
+            self.start_versus_bot()
+        else:
+            self.start_versus_player()
+
+    def prompt_game_mode(self) -> GameMode:
+        return questionary.select(
+            message=f'Choose a game mode:',
+            choices=[
+                Choice(title='Single Match', value=GameMode.single_match),
+                Choice(title='Versus Computer', value=GameMode.versus_bot),
+                Choice(title='Versus Player', value=GameMode.vs_player)
+            ],
+            style=self.custom_styling,
+            qmark='🕹'
+        ).ask()
+
+    def start_single_match(self):
+        generation = self.prompt_user_for_generation()
 
         user_wants_to_battle = True
         while user_wants_to_battle:
-            self.commence_battle()
+            self.commence_battle(generation)
             user_wants_to_battle = self.prompt_continue()
         self.show_final_score()
+
+    def start_versus_bot(self):
+        pass
+
+    def start_versus_player(self):
+        pass
 
     def get_turn_player_str(self, turn_player: Turn) -> str:
         if turn_player == Turn.user:
@@ -91,12 +120,12 @@ class Game:
         total = blue(f'{self.battles} total')
         print(f'Your score: {win_count}, {lose_count}, {draw_count} ({total})')
 
-    def commence_battle(self):
+    def commence_battle(self, generation: int):
         # choose pokemon for user and opponent
-        user_pokemon = get_random_pokemon(self.generation)
+        user_pokemon = get_random_pokemon(generation)
         print(f'You drew {blue(user_pokemon.name)}!')
         # pp.pprint(user_pokemon)
-        enemy_pokemon = get_random_pokemon(self.generation)
+        enemy_pokemon = get_random_pokemon(generation)
 
         turn_player = self.choose_turn_player(CoinToss.heads)
 
