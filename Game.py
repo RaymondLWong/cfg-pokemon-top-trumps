@@ -26,6 +26,9 @@ class Turn(Enum):
     opponent = 2
 
 
+Player = Turn
+
+
 class CoinToss(Enum):
     heads = 1,
     tails = 0
@@ -69,7 +72,7 @@ class Game:
     draws = 0
     loses = 0
 
-    deck: List[int]
+    deck: List[int] = []
     player_cards: List[Pokemon] = []
     opponent_cards: List[Pokemon] = []
 
@@ -113,8 +116,9 @@ class Game:
         pass
 
     def start_deplete_game_mode(self):
-        generation = self.prompt_user_for_generation()
-        card_limit = self.prompt_max_cards_win_condition(generation)
+        self.generation = self.prompt_user_for_generation()
+        self.create_deck()
+        card_limit = self.prompt_max_cards_win_condition(self.generation)
         first_turn = self.choose_turn_player(CoinToss.heads)
         while self.battle_count < card_limit:
             self.commence_battle(first_turn)
@@ -153,6 +157,14 @@ class Game:
         pokemon = create_pokemon(poke_id)
         return pokemon
 
+    def move_card(self, card: Pokemon, player_to_take_from: Player):
+        if player_to_take_from == Player.user:
+            self.opponent_cards.append(card)
+            self.player_cards.remove(card)
+        else:
+            self.player_cards.append(card)
+            self.opponent_cards.remove(card)
+
     def choose_turn_player(self, user_choice: CoinToss) -> Turn:
         print('Tossing coin... ', end='')
         coin_toss: CoinToss = random.choice([CoinToss.heads, CoinToss.tails])
@@ -186,7 +198,9 @@ class Game:
         lose_count = red(f'{self.loses} loses')
         draw_count = yellow(f'{self.draws} draws')
         total = blue(f'{self.battle_count} total')
+        print('=' * 50)
         print(f'Your score: {win_count}, {lose_count}, {draw_count} ({total})')
+        print('=' * 50)
 
     def commence_battle(
             self,
@@ -247,6 +261,7 @@ class Game:
 
         result = compare(user_pokemon_stat, enemy_pokemon_stat)
         if result == BattleResult.draw:
+            self.draws += 1
             user_pokemon = blue(user_pokemon.name),
             enemy_pokemon = red(enemy_pokemon.name),
             stat_name = yellow(stat_name),
@@ -255,6 +270,9 @@ class Game:
                       f"Your {user_pokemon} and your opponent's {enemy_pokemon} both have {stat_value} {stat_name}"
         else:
             if result == BattleResult.win:
+                self.wins += 1
+                self.move_card(enemy_pokemon, Player.opponent)
+
                 winner = 'Your'
                 wining_pokemon = blue(user_pokemon.name)
                 wining_stat = yellow(user_pokemon_stat)
@@ -262,6 +280,8 @@ class Game:
                 loser_pokemon = red(enemy_pokemon.name)
                 losing_stat = yellow(enemy_pokemon_stat)
             else:
+                self.loses += 1
+                self.move_card(user_pokemon, Player.user)
                 winner = 'Enemy'
                 wining_pokemon = red(enemy_pokemon.name)
                 wining_stat = yellow(enemy_pokemon_stat)
@@ -272,16 +292,17 @@ class Game:
             summary = f"{winner} {wining_pokemon}'s {wining_stat} {coloured_stat_name} beats "\
                       f"{loser} {loser_pokemon}'s {losing_stat} {coloured_stat_name}! "
         print(summary)
+        return result
 
     def announce_match_winner(self, result: BattleResult):
+        player_card_count = yellow(len(self.player_cards))
+        opponent_card_count = yellow(len(self.opponent_cards))
+        print(f'You accumulated {player_card_count} cards and your opponent amassed {opponent_card_count} cards.')
         if result == BattleResult.win:
-            self.wins += 1
             print('You {} the match!'.format(green('WIN')))
         elif result == BattleResult.lose:
-            self.loses += 1
             print('You {} the match!'.format(red('LOSE')))
         else:
-            self.draws += 1
             print('The match ends in a {}!'.format(yellow('DRAW')))
 
     def announce_match_winner_for_deplete(self):

@@ -1,26 +1,27 @@
 from colorama import Fore, Style
 from questionary import Choice
-
 from Card import Entry
 
+str_int = str or int
 
-def highlight(string: str, colour: Fore = Fore.CYAN) -> str:
+
+def highlight(string: str_int, colour: Fore = Fore.CYAN) -> str:
     return f'{colour}{string}{Style.RESET_ALL}'
 
 
-def red(string: str) -> str:
+def red(string: str_int) -> str:
     return highlight(string, Fore.RED)
 
 
-def green(string: str) -> str:
+def green(string: str_int) -> str:
     return highlight(string, Fore.GREEN)
 
 
-def blue(string: str) -> str:
+def blue(string: str_int) -> str:
     return highlight(string, Fore.CYAN)
 
 
-def yellow(string: str) -> str:
+def yellow(string: str_int) -> str:
     return highlight(string, Fore.YELLOW)
 
 
