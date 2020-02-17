@@ -1,4 +1,3 @@
-import pprint as pp
 import random
 from decimal import Decimal
 from typing import List, TypeVar, Callable
@@ -8,9 +7,9 @@ from enum import Enum
 from questionary import Choice
 
 from Card import Entry, Pokemon, create_pokemon
-from Generations import get_random_pokemon, get_available_generations, get_static_pokemon_count_for_generation, \
+from Generations import get_available_generations, get_static_pokemon_count_for_generation, \
     get_poke_id
-from Utils import create_choice, green, red, yellow, blue, purple, rainbow
+from Utils import create_choice, green, red, yellow, blue, purple
 from prompt_toolkit.styles import Style
 
 T = TypeVar('T')
@@ -135,7 +134,24 @@ class Game:
             opponent_lost = turn_player == Turn.opponent and previous_battle_result == BattleResult.win
             if user_lost or opponent_lost:
                 turn_player = self.change_turns(turn_player)
-            previous_battle_result = self.commence_battle(turn_player)
+
+            # if there's one more card in the neutral deck,
+            # it will just get added to the winning person's deck,
+            # so start calculating winner
+            if len(self.deck) == 1:
+                pokemon = create_pokemon(self.deck[0])
+                announcement = 'There is only one card left in the neutral deck ({}). '\
+                               'Determining winner...'.format(blue(pokemon.name))
+                print(announcement)
+
+                # add last card to current player's turn
+                if turn_player == Turn.user:
+                    self.player_cards.append(pokemon)
+                else:
+                    self.opponent_cards.append(pokemon)
+                break
+            else:
+                previous_battle_result = self.commence_battle(turn_player)
             print_separator()
         self.announce_match_winner_for_deplete()
         self.show_final_score()
@@ -161,7 +177,7 @@ class Game:
         pass
 
     def has_player_obtained_all_cards(self) -> bool:
-        if len(self.deck):
+        if len(self.deck) == 0:
             if len(self.player_cards) == 0 or len(self.opponent_cards) == 0:
                 return True
         return False
@@ -180,7 +196,7 @@ class Game:
             message=f'Enter a card limit (2-{max_cards}):',
             style=self.custom_styling,
             qmark='🃏',
-            validate=validate_card_limit
+            validate=lambda user_input: validate_card_limit(user_input, 2, max_cards)
         ).ask()
         return int(user_choice) or max_cards
 
@@ -197,14 +213,18 @@ class Game:
         offset = get_poke_id(self.generation, 1)
         self.deck = list(range(offset, offset + pokemon_in_generation))
 
-    def draw_from_deck(self, deck: List[Pokemon]) -> Pokemon:
-        if len(self.deck) > 0:
-            deck = self.deck
+    def draw_from_deck(self, deck: List[Pokemon or int]) -> Pokemon:
+        deck_to_search = self.deck if len(self.deck) > 0 else deck
 
-        poke_id = random.choice(deck)
-        deck.remove(poke_id)
-        pokemon = create_pokemon(poke_id)
-        return pokemon
+        if len(deck_to_search) > 0 and isinstance(deck_to_search[0], Pokemon):
+            card = random.choice(deck_to_search)
+            deck_to_search.remove(card)
+            return card
+        else:
+            poke_id = random.choice(deck_to_search)
+            deck_to_search.remove(poke_id)
+            pokemon = create_pokemon(poke_id)
+            return pokemon
 
     def move_card(self, card: Pokemon, destination_pile: Player):
         if destination_pile == Player.user:
@@ -285,15 +305,23 @@ class Game:
         # choose pokemon for user and opponent
         user_pokemon = self.draw_from_deck(self.player_cards)
         self.player_cards.append(user_pokemon)
-        print(f'You drew {blue(user_pokemon.name)}!')
-        # pp.pprint(user_pokemon)
+
+        if len(self.deck) == 0:
+            print('The neutral deck is empty! ', end='')
+
+        print(f'You drew {blue(user_pokemon.name)} ', end='')
+
+        if len(self.deck) > 0:
+            print('from the neutral deck!')
+        else:
+            print('from your deck!')
+
         enemy_pokemon = self.draw_from_deck(self.opponent_cards)
         self.opponent_cards.append(enemy_pokemon)
 
         if turn_player == Turn.user:
             turn_player_chosen_stat = self.prompt_user_for_stat(user_pokemon)
         else:
-            # pp.pprint(enemy_pokemon)
             turn_player_chosen_stat = self.choose_stat_for_opponent(enemy_pokemon)
 
         self.announce_chosen_stat(turn_player, turn_player_chosen_stat)
@@ -335,12 +363,13 @@ class Game:
         result = compare(user_pokemon_stat, enemy_pokemon_stat)
         if result == BattleResult.draw:
             self.draws += 1
-            user_pokemon = blue(user_pokemon.name),
-            enemy_pokemon = red(enemy_pokemon.name),
-            stat_name = yellow(stat_name),
-            stat_value = yellow(user_pokemon_stat)
-            summary = f"{yellow('DRAW')}! "\
-                      f"Your {user_pokemon} and your opponent's {enemy_pokemon} both have {stat_value} {stat_name}"
+            summary = "{}! Your {} and your opponent's {} both have {} {}.".format(
+                yellow('DRAW'),
+                blue(user_pokemon.name),
+                red(enemy_pokemon.name),
+                yellow(user_pokemon_stat),
+                yellow(stat_name)
+            )
         else:
             if result == BattleResult.win:
                 self.wins += 1

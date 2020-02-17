@@ -181,7 +181,7 @@ def get_stats(stats) -> Stats:
     )
 
 
-def create_pokemon(poke_id) -> Pokemon:
+def create_pokemon(poke_id: int) -> Pokemon:
     info = pb.pokemon(poke_id)
     sprite = info.sprites.front_default
     stats = get_stats(info.stats)
