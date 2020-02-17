@@ -1,6 +1,7 @@
 from colorama import Fore, Style
 from questionary import Choice
 from Card import Entry
+import random
 
 str_int = str or int
 
@@ -32,3 +33,11 @@ def purple(string: str_int) -> str:
 def create_choice(entry: Entry) -> Choice:
     aligned_title = '{:<17} {:<3}'.format(entry.name, str(entry.value))
     return Choice(title=aligned_title, value=entry)
+
+
+def rainbow(text: str) -> str:
+    bad_colours = ['BLACK', 'LIGHTBLACK_EX', 'RESET']
+    colour_codes = vars(Fore)
+    colours = [colour_codes[color] for color in colour_codes if color not in bad_colours]
+    return ''.join([random.choice(colours) + char for char in text])
+

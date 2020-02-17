@@ -1,7 +1,7 @@
 import pprint as pp
 import random
 from decimal import Decimal
-from typing import List, TypeVar
+from typing import List, TypeVar, Callable
 
 import questionary
 from enum import Enum
@@ -10,7 +10,7 @@ from questionary import Choice
 from Card import Entry, Pokemon, create_pokemon
 from Generations import get_random_pokemon, get_available_generations, get_static_pokemon_count_for_generation, \
     get_poke_id
-from Utils import create_choice, green, red, yellow, blue, purple
+from Utils import create_choice, green, red, yellow, blue, purple, rainbow
 from prompt_toolkit.styles import Style
 
 T = TypeVar('T')
@@ -51,17 +51,21 @@ def compare(a: T, b: T) -> BattleResult:
         return BattleResult.lose
 
 
-def validate_card_limit(limit: str) -> bool:
+def validate_card_limit(limit: str, min_value: int, max_value: int) -> bool:
     try:
-        int(limit)
-        return True
+        value = int(limit)
+        return min_value <= value <= max_value
     except ValueError:
-        print(f'Please enter a valid number between 1 and {limit}')
+        print(f'Please enter a valid number between 2 and {limit}')
         return False
 
 
-def print_separator():
-    print('=' * 50)
+def print_separator(colour_me: Callable[[str], str] = None):
+    border = '=' * 50
+    if colour_me:
+        print(colour_me(border))
+    else:
+        print(border)
 
 
 class Game:
@@ -109,6 +113,7 @@ class Game:
     def start_single_match(self):
         self.generation = self.prompt_user_for_generation()
         self.create_deck()
+        self.announce_start()
         user_wants_to_battle = True
         first_battle = True
         while user_wants_to_battle:
@@ -118,15 +123,30 @@ class Game:
         self.show_final_score()
 
     def start_traditional(self):
-        pass
+        self.generation = self.prompt_user_for_generation()
+        self.create_deck()
+        card_limit = self.prompt_max_cards_win_condition(self.generation)
+        self.chop_deck(card_limit)
+        turn_player = self.choose_turn_player(CoinToss.heads)
+        self.announce_start()
+        previous_battle_result = None
+        while len(self.deck) != 0 and not self.has_player_obtained_all_cards():
+            user_lost = turn_player == Turn.user and previous_battle_result == BattleResult.lose
+            opponent_lost = turn_player == Turn.opponent and previous_battle_result == BattleResult.win
+            if user_lost or opponent_lost:
+                turn_player = self.change_turns(turn_player)
+            previous_battle_result = self.commence_battle(turn_player)
+            print_separator()
+        self.announce_match_winner_for_deplete()
+        self.show_final_score()
 
     def start_deplete_game_mode(self):
         self.generation = self.prompt_user_for_generation()
         self.create_deck()
         card_limit = self.prompt_max_cards_win_condition(self.generation)
         turn_player = self.choose_turn_player(CoinToss.heads)
-        previous_battle_result = None
         self.announce_start()
+        previous_battle_result = None
         while self.battle_count < card_limit:
             user_lost = turn_player == Turn.user and previous_battle_result == BattleResult.lose
             opponent_lost = turn_player == Turn.opponent and previous_battle_result == BattleResult.win
@@ -140,13 +160,24 @@ class Game:
     def start_versus_player(self):
         pass
 
+    def has_player_obtained_all_cards(self) -> bool:
+        if len(self.deck):
+            if len(self.player_cards) == 0 or len(self.opponent_cards) == 0:
+                return True
+        return False
+
+    def chop_deck(self, new_size: int):
+        if new_size:
+            while len(self.deck) > new_size:
+                self.deck.remove(random.choice(self.deck))
+
     def change_turns(self, current_turn_player: Turn) -> Turn:
         return Turn.opponent if current_turn_player == Turn.user else Turn.user
 
     def prompt_card_limit(self, gen: int) -> int:
         max_cards = get_static_pokemon_count_for_generation(gen)
         user_choice = questionary.text(
-            message=f'Enter a card limit (1-{max_cards}):',
+            message=f'Enter a card limit (2-{max_cards}):',
             style=self.custom_styling,
             qmark='🃏',
             validate=validate_card_limit
@@ -159,16 +190,19 @@ class Game:
             style=self.custom_styling,
             qmark='🧢'
         ).ask()
-        return self.prompt_card_limit(gen) if enforce_limit else  get_static_pokemon_count_for_generation(gen)
+        return self.prompt_card_limit(gen) if enforce_limit else get_static_pokemon_count_for_generation(gen)
 
     def create_deck(self):
         pokemon_in_generation = get_static_pokemon_count_for_generation(self.generation)
         offset = get_poke_id(self.generation, 1)
         self.deck = list(range(offset, offset + pokemon_in_generation))
 
-    def draw_from_deck(self) -> Pokemon:
-        poke_id = random.choice(self.deck)
-        self.deck.remove(poke_id)
+    def draw_from_deck(self, deck: List[Pokemon]) -> Pokemon:
+        if len(self.deck) > 0:
+            deck = self.deck
+
+        poke_id = random.choice(deck)
+        deck.remove(poke_id)
         pokemon = create_pokemon(poke_id)
         return pokemon
 
@@ -181,9 +215,12 @@ class Game:
             self.player_cards.remove(card)
 
     def announce_start(self):
-        print_separator()
-        print('{:<} {:^44} {:>}'.format('||', 'STARTING GAME...', '||'))
-        print_separator()
+        print_separator(green)
+        left_side = red('||')
+        right_side = blue('||')
+        title = purple('STARTING GAME...')
+        print('{:<} {:^53} {:>}'.format(left_side, title, right_side))
+        print_separator(yellow)
 
     def choose_turn_player(self, user_choice: CoinToss) -> Turn:
         print('Tossing coin... ', end='')
@@ -214,7 +251,7 @@ class Game:
         ).ask()
 
     def get_win_rate(self) -> str:
-        win_rate = 100 * (self.wins / self.battle_count)
+        win_rate = 100 * (self.wins / self.battle_count) if self.battle_count > 0 else 0
         if Decimal(win_rate) % 1 == 0:
             win_rate = int(win_rate)
         else:
@@ -246,11 +283,11 @@ class Game:
             turn_player = self.choose_turn_player(CoinToss.heads)
 
         # choose pokemon for user and opponent
-        user_pokemon = self.draw_from_deck()
+        user_pokemon = self.draw_from_deck(self.player_cards)
         self.player_cards.append(user_pokemon)
         print(f'You drew {blue(user_pokemon.name)}!')
         # pp.pprint(user_pokemon)
-        enemy_pokemon = self.draw_from_deck()
+        enemy_pokemon = self.draw_from_deck(self.opponent_cards)
         self.opponent_cards.append(enemy_pokemon)
 
         if turn_player == Turn.user:
