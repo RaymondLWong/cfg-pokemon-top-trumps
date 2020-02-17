@@ -201,11 +201,7 @@ class Game:
         return turn_player
 
     def prompt_continue(self) -> bool:
-        win_rate = 100 * (self.wins / self.battle_count)
-        if Decimal(win_rate) % 1 == 0:
-            win_rate = int(win_rate)
-        else:
-            win_rate = '{:.2f}'.format(win_rate)
+        win_rate = self.get_win_rate()
         stats = '{}% win rate, {} total battles'.format(win_rate, self.battle_count)
         return questionary.select(
             message=f'Battle again? ({stats})',
@@ -217,12 +213,27 @@ class Game:
             qmark='👊'
         ).ask()
 
+    def get_win_rate(self) -> str:
+        win_rate = 100 * (self.wins / self.battle_count)
+        if Decimal(win_rate) % 1 == 0:
+            win_rate = int(win_rate)
+        else:
+            win_rate = '{:.2f}'.format(win_rate)
+        return win_rate
+
+    def show_win_rate(self):
+        win_rate = self.get_win_rate()
+        smiley = ':)' if int(float(win_rate)) > 70 else ':('
+        win_rate = purple(win_rate)
+        print('Your win rate is {}% {}'.format(win_rate, smiley))
+
     def show_final_score(self):
         win_count = green(f'{self.wins} wins')
         lose_count = red(f'{self.loses} loses')
         draw_count = yellow(f'{self.draws} draws')
         total = blue(f'{self.battle_count} total')
         print_separator()
+        self.show_win_rate()
         print(f'Your score: {win_count}, {lose_count}, {draw_count} ({total})')
         print_separator()
 
