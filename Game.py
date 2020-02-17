@@ -9,7 +9,7 @@ from questionary import Choice
 from Card import Entry, Pokemon, create_pokemon
 from Generations import get_random_pokemon, get_available_generations, get_static_pokemon_count_for_generation, \
     get_poke_id
-from Utils import create_choice, green, red, yellow, blue
+from Utils import create_choice, green, red, yellow, blue, purple
 from prompt_toolkit.styles import Style
 
 T = TypeVar('T')
@@ -119,14 +119,20 @@ class Game:
         self.generation = self.prompt_user_for_generation()
         self.create_deck()
         card_limit = self.prompt_max_cards_win_condition(self.generation)
-        first_turn = self.choose_turn_player(CoinToss.heads)
+        turn_player = self.choose_turn_player(CoinToss.heads)
+        previous_battle_result = None
         while self.battle_count < card_limit:
-            self.commence_battle(first_turn)
+            if previous_battle_result == BattleResult.lose:
+                turn_player = self.change_turns(turn_player)
+            previous_battle_result = self.commence_battle(turn_player)
         self.announce_match_winner_for_deplete()
         self.show_final_score()
 
     def start_versus_player(self):
         pass
+
+    def change_turns(self, current_turn_player: Turn) -> Turn:
+        return Turn.opponent if current_turn_player == Turn.user else Turn.user
 
     def prompt_card_limit(self, gen: int) -> int:
         max_cards = get_static_pokemon_count_for_generation(gen)
@@ -206,7 +212,7 @@ class Game:
             self,
             turn_player: Turn = None,
             first_battle: bool = None
-    ):
+    ) -> BattleResult:
         if first_battle or not turn_player:
             turn_player = self.choose_turn_player(CoinToss.heads)
 
@@ -228,6 +234,7 @@ class Game:
 
         result = self.do_battle(turn_player_chosen_stat, user_pokemon, enemy_pokemon)
         # TODO: if draw, pick another card
+        return result
 
     def prompt_user_for_stat(self, user_pokemon: Pokemon) -> Entry:
         choices = list(map(lambda stat: create_choice(stat), user_pokemon.get_available_battle_stats(False)))
@@ -295,8 +302,9 @@ class Game:
         return result
 
     def announce_match_winner(self, result: BattleResult):
-        player_card_count = yellow(len(self.player_cards))
-        opponent_card_count = yellow(len(self.opponent_cards))
+        print('=' * 50)
+        player_card_count = purple(len(self.player_cards))
+        opponent_card_count = purple(len(self.opponent_cards))
         print(f'You accumulated {player_card_count} cards and your opponent amassed {opponent_card_count} cards.')
         if result == BattleResult.win:
             print('You {} the match!'.format(green('WIN')))

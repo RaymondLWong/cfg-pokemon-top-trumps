@@ -25,6 +25,10 @@ def yellow(string: str_int) -> str:
     return highlight(string, Fore.YELLOW)
 
 
+def purple(string: str_int) -> str:
+    return highlight(string, Fore.MAGENTA)
+
+
 def create_choice(entry: Entry) -> Choice:
     aligned_title = '{:<17} {:<3}'.format(entry.name, str(entry.value))
     return Choice(title=aligned_title, value=entry)
