@@ -59,6 +59,10 @@ def validate_card_limit(limit: str) -> bool:
         return False
 
 
+def print_separator():
+    print('=' * 50)
+
+
 class Game:
     custom_styling = Style([
         ('highlighted', 'fg:cyan'),
@@ -121,10 +125,14 @@ class Game:
         card_limit = self.prompt_max_cards_win_condition(self.generation)
         turn_player = self.choose_turn_player(CoinToss.heads)
         previous_battle_result = None
+        self.announce_start()
         while self.battle_count < card_limit:
-            if previous_battle_result == BattleResult.lose:
+            user_lost = turn_player == Turn.user and previous_battle_result == BattleResult.lose
+            opponent_lost = turn_player == Turn.opponent and previous_battle_result == BattleResult.win
+            if user_lost or opponent_lost:
                 turn_player = self.change_turns(turn_player)
             previous_battle_result = self.commence_battle(turn_player)
+            print_separator()
         self.announce_match_winner_for_deplete()
         self.show_final_score()
 
@@ -163,13 +171,18 @@ class Game:
         pokemon = create_pokemon(poke_id)
         return pokemon
 
-    def move_card(self, card: Pokemon, player_to_take_from: Player):
-        if player_to_take_from == Player.user:
-            self.opponent_cards.append(card)
-            self.player_cards.remove(card)
-        else:
+    def move_card(self, card: Pokemon, destination_pile: Player):
+        if destination_pile == Player.user:
             self.player_cards.append(card)
             self.opponent_cards.remove(card)
+        else:
+            self.opponent_cards.append(card)
+            self.player_cards.remove(card)
+
+    def announce_start(self):
+        print_separator()
+        print('{:<} {:^44} {:>}'.format('||', 'STARTING GAME...', '||'))
+        print_separator()
 
     def choose_turn_player(self, user_choice: CoinToss) -> Turn:
         print('Tossing coin... ', end='')
@@ -204,9 +217,9 @@ class Game:
         lose_count = red(f'{self.loses} loses')
         draw_count = yellow(f'{self.draws} draws')
         total = blue(f'{self.battle_count} total')
-        print('=' * 50)
+        print_separator()
         print(f'Your score: {win_count}, {lose_count}, {draw_count} ({total})')
-        print('=' * 50)
+        print_separator()
 
     def commence_battle(
             self,
@@ -278,7 +291,7 @@ class Game:
         else:
             if result == BattleResult.win:
                 self.wins += 1
-                self.move_card(enemy_pokemon, Player.opponent)
+                self.move_card(enemy_pokemon, Player.user)
 
                 winner = 'Your'
                 wining_pokemon = blue(user_pokemon.name)
@@ -286,23 +299,28 @@ class Game:
                 loser = 'enemy'
                 loser_pokemon = red(enemy_pokemon.name)
                 losing_stat = yellow(enemy_pokemon_stat)
+                print('You {}! '.format(green('WIN')), end='')
             else:
                 self.loses += 1
-                self.move_card(user_pokemon, Player.user)
+                self.move_card(user_pokemon, Player.opponent)
                 winner = 'Enemy'
                 wining_pokemon = red(enemy_pokemon.name)
                 wining_stat = yellow(enemy_pokemon_stat)
                 loser = 'your'
                 loser_pokemon = blue(user_pokemon.name)
                 losing_stat = yellow(user_pokemon_stat)
+                print('You {}! '.format(red('LOSE')), end='')
             coloured_stat_name = yellow(stat_name)
             summary = f"{winner} {wining_pokemon}'s {wining_stat} {coloured_stat_name} beats "\
                       f"{loser} {loser_pokemon}'s {losing_stat} {coloured_stat_name}! "
         print(summary)
+        if result == BattleResult.win:
+            print("You get the opponent's {}!".format(red(enemy_pokemon.name)))
+        elif result == BattleResult.lose:
+            print('Your opponent gets your {}!'.format(blue(user_pokemon.name)))
         return result
 
     def announce_match_winner(self, result: BattleResult):
-        print('=' * 50)
         player_card_count = purple(len(self.player_cards))
         opponent_card_count = purple(len(self.opponent_cards))
         print(f'You accumulated {player_card_count} cards and your opponent amassed {opponent_card_count} cards.')
