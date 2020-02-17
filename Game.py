@@ -6,8 +6,9 @@ import questionary
 from enum import Enum
 from questionary import Choice
 
-from Card import Entry, Pokemon
-from Generations import get_random_pokemon, get_available_generations, get_static_pokemon_count_for_generation
+from Card import Entry, Pokemon, create_pokemon
+from Generations import get_random_pokemon, get_available_generations, get_static_pokemon_count_for_generation, \
+    get_poke_id
 from Utils import create_choice, green, red, yellow, blue
 from prompt_toolkit.styles import Style
 
@@ -61,11 +62,14 @@ class Game:
         ('pointer', 'bold')
     ])
 
+    generation: int
+
     battle_count = 0
     wins = 0
     draws = 0
     loses = 0
 
+    deck: List[int]
     player_cards: List[Pokemon] = []
     opponent_cards: List[Pokemon] = []
 
@@ -95,11 +99,12 @@ class Game:
         ).ask()
 
     def start_single_match(self):
-        generation = self.prompt_user_for_generation()
+        self.generation = self.prompt_user_for_generation()
+        self.create_deck()
         user_wants_to_battle = True
         first_battle = True
         while user_wants_to_battle:
-            self.commence_battle(generation, first_battle=first_battle)
+            self.commence_battle(first_battle=first_battle)
             first_battle = False
             user_wants_to_battle = self.prompt_continue()
         self.show_final_score()
@@ -112,7 +117,7 @@ class Game:
         card_limit = self.prompt_max_cards_win_condition(generation)
         first_turn = self.choose_turn_player(CoinToss.heads)
         while self.battle_count < card_limit:
-            self.commence_battle(generation, first_turn)
+            self.commence_battle(first_turn)
         self.announce_match_winner_for_deplete()
         self.show_final_score()
 
@@ -136,6 +141,17 @@ class Game:
             qmark='🧢'
         ).ask()
         return self.prompt_card_limit(gen) if enforce_limit else  get_static_pokemon_count_for_generation(gen)
+
+    def create_deck(self):
+        pokemon_in_generation = get_static_pokemon_count_for_generation(self.generation)
+        offset = get_poke_id(self.generation, 1)
+        self.deck = list(range(offset, offset + pokemon_in_generation))
+
+    def draw_from_deck(self) -> Pokemon:
+        poke_id = random.choice(self.deck)
+        self.deck.remove(poke_id)
+        pokemon = create_pokemon(poke_id)
+        return pokemon
 
     def choose_turn_player(self, user_choice: CoinToss) -> Turn:
         print('Tossing coin... ', end='')
@@ -174,7 +190,6 @@ class Game:
 
     def commence_battle(
             self,
-            generation: int,
             turn_player: Turn = None,
             first_battle: bool = None
     ):
@@ -182,10 +197,12 @@ class Game:
             turn_player = self.choose_turn_player(CoinToss.heads)
 
         # choose pokemon for user and opponent
-        user_pokemon = get_random_pokemon(generation)
+        user_pokemon = self.draw_from_deck()
+        self.player_cards.append(user_pokemon)
         print(f'You drew {blue(user_pokemon.name)}!')
         # pp.pprint(user_pokemon)
-        enemy_pokemon = get_random_pokemon(generation)
+        enemy_pokemon = self.draw_from_deck()
+        self.opponent_cards.append(enemy_pokemon)
 
         if turn_player == Turn.user:
             turn_player_chosen_stat = self.prompt_user_for_stat(user_pokemon)
@@ -210,7 +227,6 @@ class Game:
     def choose_stat_for_opponent(self, opponent_pokemon: Pokemon) -> Entry:
         available_stats = opponent_pokemon.get_available_battle_stats(True)
         random_stat = random.choice(available_stats)
-        print(f'random stat {random_stat} chosen')
         return opponent_pokemon[random_stat]
 
     def get_turn_player_str(self, turn_player: Turn) -> str:
@@ -236,7 +252,7 @@ class Game:
             stat_name = yellow(stat_name),
             stat_value = yellow(user_pokemon_stat)
             summary = f"{yellow('DRAW')}! "\
-                      f"Your {user_pokemon} and your opponent's {enemy_pokemon} have {stat_value} {stat_name}"
+                      f"Your {user_pokemon} and your opponent's {enemy_pokemon} both have {stat_value} {stat_name}"
         else:
             if result == BattleResult.win:
                 winner = 'Your'
@@ -253,7 +269,7 @@ class Game:
                 loser_pokemon = blue(user_pokemon.name)
                 losing_stat = yellow(user_pokemon_stat)
             coloured_stat_name = yellow(stat_name)
-            summary = f"{winner} {wining_pokemon}'s {wining_stat} {coloured_stat_name} bests "\
+            summary = f"{winner} {wining_pokemon}'s {wining_stat} {coloured_stat_name} beats "\
                       f"{loser} {loser_pokemon}'s {losing_stat} {coloured_stat_name}! "
         print(summary)
 
