@@ -132,6 +132,7 @@ class Game:
         while user_wants_to_battle:
             self.commence_battle(first_battle=first_battle)
             first_battle = False
+            print_separator()
             user_wants_to_battle = self.prompt_continue()
         self.announce_match_winner()
 
@@ -313,14 +314,10 @@ class Game:
     def prompt_continue(self) -> bool:
         win_rate = self.get_win_rate()
         stats = '{} % win rate, {} total battles'.format(win_rate, self.battle_count)
-        return questionary.select(
+        return questionary.confirm(
             message=f'Battle again? ({stats})',
-            choices=[
-                Choice(title='Yes', value=True),
-                Choice(title='No', value=False)
-            ],
             style=self.custom_styling,
-            qmark='👊'
+            qmark=random.choice(['👊', '🤜', '🤛'])
         ).ask()
 
     def get_win_rate(self) -> str:
@@ -467,9 +464,9 @@ class Game:
                 print(f'You accumulated {player_card_count} cards and your opponent amassed {opponent_card_count} cards.')
 
             if final_result == BattleResult.win:
-                print('Congratulations, you {} the match!'.format(green('WIN')))
+                print('Congratulations, you {} the match! ✌️'.format(green('WIN')))
             elif final_result == BattleResult.lose:
-                print('Unfortunately, you {} the match...'.format(red('LOSE')))
+                print('☠️ Unfortunately, you {} the match... ☠️'.format(red('LOSE')))
             else:
                 print('The match ends in a {}!'.format(yellow('DRAW')))
         self.show_final_score()
