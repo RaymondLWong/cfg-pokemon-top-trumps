@@ -94,9 +94,9 @@ class Game:
         if self.game_mode == GameMode.single_match:
             self.start_single_match()
         elif self.game_mode == GameMode.traditional:
-            self.start_traditional()
+            self.start_custom_game(self.traditional_win_condition)
         elif self.game_mode == GameMode.deplete:
-            self.start_deplete_game_mode()
+            self.start_custom_game(self.deplete_win_condition)
         else:
             self.start_versus_player()
 
@@ -135,42 +135,36 @@ class Game:
             user_wants_to_battle = self.prompt_continue()
         self.announce_match_winner()
 
-    # TODO: refactor as next 2 functions share lots of code
-    def start_traditional(self):
+    def start_custom_game(self, game_should_continue: Callable[[], bool]):
         self.start_game(True)
         turn_player = self.choose_turn_player(CoinToss.heads)
         previous_battle_result = None
-        while len(self.deck) != 0 and not self.has_player_obtained_all_cards():
-            user_lost = turn_player == Turn.user and previous_battle_result == BattleResult.lose
-            opponent_lost = turn_player == Turn.opponent and previous_battle_result == BattleResult.win
-            if user_lost or opponent_lost:
-                turn_player = self.change_turns(turn_player)
-
-            if self.give_final_card(turn_player):
-                break
-            else:
-                previous_battle_result = self.commence_battle(turn_player)
-            print_separator()
-        self.announce_match_winner()
-
-    def start_deplete_game_mode(self):
-        self.start_game(True)
-        turn_player = self.choose_turn_player(CoinToss.heads)
-        previous_battle_result = None
-        while len(self.deck) > 0 and round(self.battle_count * 2) < self.card_limit:
+        while game_should_continue():
             user_lost = turn_player == Turn.user and previous_battle_result == BattleResult.lose
             opponent_lost = turn_player == Turn.opponent and previous_battle_result == BattleResult.win
 
-            if self.give_final_card(turn_player):
-                break
-            else:
+            if self.game_mode is GameMode.traditional:
                 if user_lost or opponent_lost:
                     turn_player = self.change_turns(turn_player)
+
+            if self.give_final_card(turn_player):
+                break
+            else:
+                if self.game_mode is GameMode.deplete:
+                    if user_lost or opponent_lost:
+                        turn_player = self.change_turns(turn_player)
                 previous_battle_result = self.commence_battle(turn_player)
             print_separator()
         self.announce_match_winner()
 
+    def traditional_win_condition(self):
+        return len(self.deck) != 0 and not self.has_player_obtained_all_cards()
+
+    def deplete_win_condition(self):
+        return len(self.deck) > 0 and round(self.battle_count * 2) < self.card_limit
+
     def start_versus_player(self):
+        print('PvP mode not implemented yet, sorry :(')
         pass
 
     def has_player_obtained_all_cards(self) -> bool:
@@ -462,12 +456,16 @@ class Game:
         return result
 
     def announce_match_winner(self):
-        if self.game_mode != GameMode.single_match:
+        if self.game_mode is not GameMode.single_match:
             player_card_count = purple(len(self.player_cards))
             opponent_card_count = purple(len(self.opponent_cards))
             final_result = compare(len(self.player_cards), len(self.opponent_cards))
 
-            print(f'You accumulated {player_card_count} cards and your opponent amassed {opponent_card_count} cards.')
+            if self.game_mode is GameMode.traditional:
+                print(f'You managed to obtain all {player_card_count} cards!')
+            elif self.game_mode is GameMode.deplete:
+                print(f'You accumulated {player_card_count} cards and your opponent amassed {opponent_card_count} cards.')
+
             if final_result == BattleResult.win:
                 print('Congratulations, you {} the match!'.format(green('WIN')))
             elif final_result == BattleResult.lose:
