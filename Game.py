@@ -121,13 +121,14 @@ class Game:
             user_wants_to_battle = self.prompt_continue()
         self.show_final_score()
 
+    # TODO: refactor as next 2 functions share lots of code
     def start_traditional(self):
         self.generation = self.prompt_user_for_generation()
         self.create_deck()
         card_limit = self.prompt_max_cards_win_condition(self.generation)
         self.chop_deck(card_limit)
-        turn_player = self.choose_turn_player(CoinToss.heads)
         self.announce_start()
+        turn_player = self.choose_turn_player(CoinToss.heads)
         previous_battle_result = None
         while len(self.deck) != 0 and not self.has_player_obtained_all_cards():
             user_lost = turn_player == Turn.user and previous_battle_result == BattleResult.lose
@@ -148,8 +149,8 @@ class Game:
         self.create_deck()
         card_limit = self.prompt_max_cards_win_condition(self.generation)
         self.chop_deck(card_limit)
-        turn_player = self.choose_turn_player(CoinToss.heads)
         self.announce_start()
+        turn_player = self.choose_turn_player(CoinToss.heads)
         previous_battle_result = None
         while len(self.deck) > 0 and round(self.battle_count * 2) < card_limit:
             user_lost = turn_player == Turn.user and previous_battle_result == BattleResult.lose
@@ -307,8 +308,7 @@ class Game:
     def commence_battle(
             self,
             turn_player: Turn = None,
-            first_battle: bool = None,
-            use_accumulated_cards: bool = False
+            first_battle: bool = None
     ) -> BattleResult:
         if first_battle or not turn_player:
             turn_player = self.choose_turn_player(CoinToss.heads)
