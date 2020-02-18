@@ -59,12 +59,13 @@ def validate_card_limit(limit: str, min_value: int, max_value: int) -> bool:
         return False
 
 
+def get_separator(sep: str = None, colour_me: Callable[[str], str] = None) -> str:
+    sep = sep if sep else '=' * 50
+    return colour_me(sep) if colour_me else sep
+
+
 def print_separator(colour_me: Callable[[str], str] = None):
-    border = '=' * 50
-    if colour_me:
-        print(colour_me(border))
-    else:
-        print(border)
+    print(get_separator(colour_me=colour_me))
 
 
 class Game:
@@ -73,7 +74,10 @@ class Game:
         ('pointer', 'bold')
     ])
 
+    game_mode: GameMode
+
     generation: int
+    card_limit: int
 
     battle_count = 0
     wins = 0
@@ -85,13 +89,13 @@ class Game:
     opponent_cards: List[Pokemon] = []
 
     def __init__(self):
-        game_mode = self.prompt_game_mode()
+        self.game_mode = self.prompt_game_mode()
 
-        if game_mode == GameMode.single_match:
+        if self.game_mode == GameMode.single_match:
             self.start_single_match()
-        elif game_mode == GameMode.traditional:
+        elif self.game_mode == GameMode.traditional:
             self.start_traditional()
-        elif game_mode == GameMode.deplete:
+        elif self.game_mode == GameMode.deplete:
             self.start_deplete_game_mode()
         else:
             self.start_versus_player()
@@ -109,25 +113,31 @@ class Game:
             qmark='🕹'
         ).ask()
 
-    def start_single_match(self):
+    def start_game(
+            self,
+            prompt_card_limit: bool = False
+    ):
         self.generation = self.prompt_user_for_generation()
         self.create_deck()
+        if prompt_card_limit:
+            self.card_limit = self.prompt_max_cards_win_condition(self.generation)
+            self.chop_deck(self.card_limit)
         self.announce_start()
+        self.announce_instructions()
+
+    def start_single_match(self):
+        self.start_game()
         user_wants_to_battle = True
         first_battle = True
         while user_wants_to_battle:
             self.commence_battle(first_battle=first_battle)
             first_battle = False
             user_wants_to_battle = self.prompt_continue()
-        self.show_final_score()
+        self.announce_match_winner()
 
     # TODO: refactor as next 2 functions share lots of code
     def start_traditional(self):
-        self.generation = self.prompt_user_for_generation()
-        self.create_deck()
-        card_limit = self.prompt_max_cards_win_condition(self.generation)
-        self.chop_deck(card_limit)
-        self.announce_start()
+        self.start_game(True)
         turn_player = self.choose_turn_player(CoinToss.heads)
         previous_battle_result = None
         while len(self.deck) != 0 and not self.has_player_obtained_all_cards():
@@ -141,18 +151,13 @@ class Game:
             else:
                 previous_battle_result = self.commence_battle(turn_player)
             print_separator()
-        self.announce_match_winner_for_deplete()
-        self.show_final_score()
+        self.announce_match_winner()
 
     def start_deplete_game_mode(self):
-        self.generation = self.prompt_user_for_generation()
-        self.create_deck()
-        card_limit = self.prompt_max_cards_win_condition(self.generation)
-        self.chop_deck(card_limit)
-        self.announce_start()
+        self.start_game(True)
         turn_player = self.choose_turn_player(CoinToss.heads)
         previous_battle_result = None
-        while len(self.deck) > 0 and round(self.battle_count * 2) < card_limit:
+        while len(self.deck) > 0 and round(self.battle_count * 2) < self.card_limit:
             user_lost = turn_player == Turn.user and previous_battle_result == BattleResult.lose
             opponent_lost = turn_player == Turn.opponent and previous_battle_result == BattleResult.win
 
@@ -163,8 +168,7 @@ class Game:
                     turn_player = self.change_turns(turn_player)
                 previous_battle_result = self.commence_battle(turn_player)
             print_separator()
-        self.announce_match_winner_for_deplete()
-        self.show_final_score()
+        self.announce_match_winner()
 
     def start_versus_player(self):
         pass
@@ -213,11 +217,17 @@ class Game:
 
     def prompt_max_cards_win_condition(self, gen: int) -> int or None:
         enforce_limit = questionary.confirm(
-            message=f'Set a card limit?',
+            message=f"Set a card limit? (the default is 10% of a generation's pokemon)",
             style=self.custom_styling,
             qmark='🧢'
         ).ask()
-        return self.prompt_card_limit(gen) if enforce_limit else get_static_pokemon_count_for_generation(gen)
+
+        if enforce_limit:
+            return self.prompt_card_limit(gen)
+        else:
+            pokemon_in_generation = get_static_pokemon_count_for_generation(gen)
+            ten_percent = pokemon_in_generation / 10
+            return int(ten_percent)
 
     def create_deck(self):
         pokemon_in_generation = get_static_pokemon_count_for_generation(self.generation)
@@ -247,10 +257,48 @@ class Game:
 
     def announce_start(self):
         print_separator(green)
-        left_side = red('||')
-        right_side = blue('||')
+        left_side = red('|')
+        right_side = blue('|')
         title = purple('STARTING GAME...')
-        print('{:<} {:^53} {:>}'.format(left_side, title, right_side))
+        print('{:<} {:^55} {:>}'.format(left_side, title, right_side))
+        print_separator(yellow)
+
+    def announce_instructions(self):
+        instructions = []
+
+        def title_me(title: str):
+            instructions.append("{:^60}".format(blue(title)))
+
+        title_me('General Instructions')
+        instructions.extend([
+            "- A coin flip will determine who starts the game; if it's heads, you start!",
+            "- When a round starts, each player will draw one card from the deck,",
+            "   starting with whomever won the last round, or the initial coin toss.",
+            "- On a player's turn, they call out a stat they want to compete with.",
+            "   - The turn player then announces the chosen stat and both players compare values.",
+            "   - The winner then takes the loser's card (depending on the game mode).",
+            "   - If there is a draw, the cards are set aside and both players draw again.",
+            "   - The final winner of this 'mini-round wins ALL cards!",
+            "- This repeats until there are no cards left in the neutral deck.",
+            get_separator(colour_me=yellow)
+        ])
+
+        if self.game_mode == GameMode.single_match:
+            title_me('Single Match Mode')
+            instructions.append('- You start the game with one round; you choose when to stop!')
+        elif self.game_mode == GameMode.traditional:
+            title_me('Traditional Mode')
+            instructions.append('- The player to obtain ALL cards wins!')
+            instructions.append('- Once the neutral deck is empty, '
+                                'players start using their accumulated decks.')
+        elif self.game_mode == GameMode.deplete:
+            title_me('Deplete Mode')
+            instructions.append("- When the neutral deck is depleted, "
+                                "the player with the highest number of cards wins!")
+        else:
+            title_me('PvP Mode')
+            instructions.append("- Enter your opponent's IP address and agree on a game mode!")
+        print('\n'.join(instructions))
         print_separator(yellow)
 
     def choose_turn_player(self, user_choice: CoinToss) -> Turn:
@@ -270,7 +318,7 @@ class Game:
 
     def prompt_continue(self) -> bool:
         win_rate = self.get_win_rate()
-        stats = '{}% win rate, {} total battles'.format(win_rate, self.battle_count)
+        stats = '{} % win rate, {} total battles'.format(win_rate, self.battle_count)
         return questionary.select(
             message=f'Battle again? ({stats})',
             choices=[
@@ -293,7 +341,7 @@ class Game:
         win_rate = self.get_win_rate()
         smiley = ':)' if int(float(win_rate)) > 70 else ':('
         win_rate = purple(win_rate)
-        print('Your win rate is {}% {}'.format(win_rate, smiley))
+        print('Your win rate is {} % {}'.format(win_rate, smiley))
 
     def show_final_score(self):
         win_count = green(f'{self.wins} wins')
@@ -413,20 +461,20 @@ class Game:
             print('Your opponent gets your {}!'.format(blue(user_pokemon.name)))
         return result
 
-    def announce_match_winner(self, result: BattleResult):
-        player_card_count = purple(len(self.player_cards))
-        opponent_card_count = purple(len(self.opponent_cards))
-        print(f'You accumulated {player_card_count} cards and your opponent amassed {opponent_card_count} cards.')
-        if result == BattleResult.win:
-            print('You {} the match!'.format(green('WIN')))
-        elif result == BattleResult.lose:
-            print('You {} the match!'.format(red('LOSE')))
-        else:
-            print('The match ends in a {}!'.format(yellow('DRAW')))
+    def announce_match_winner(self):
+        if self.game_mode != GameMode.single_match:
+            player_card_count = purple(len(self.player_cards))
+            opponent_card_count = purple(len(self.opponent_cards))
+            final_result = compare(len(self.player_cards), len(self.opponent_cards))
 
-    def announce_match_winner_for_deplete(self):
-        match_result = compare(len(self.player_cards), len(self.opponent_cards))
-        self.announce_match_winner(match_result)
+            print(f'You accumulated {player_card_count} cards and your opponent amassed {opponent_card_count} cards.')
+            if final_result == BattleResult.win:
+                print('Congratulations, you {} the match!'.format(green('WIN')))
+            elif final_result == BattleResult.lose:
+                print('Unfortunately, you {} the match...'.format(red('LOSE')))
+            else:
+                print('The match ends in a {}!'.format(yellow('DRAW')))
+        self.show_final_score()
 
     def prompt_user_for_generation(self) -> int:
         return questionary.select(

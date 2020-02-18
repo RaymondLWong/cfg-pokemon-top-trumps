@@ -11,7 +11,8 @@ def get_static_generation_counts() -> Mapping[int, int]:
         4: 107,
         5: 156,
         6: 72,
-        7: 81
+        7: 81,
+        8: 86
     }
 
 
@@ -71,11 +72,12 @@ def get_static_generations_and_starters() -> dict:
             'names': ['Sun', 'Moon'],
             'starters': ['Rowlet', 'Litten', 'Popplio']
         },
-        8: {
-            'icons': ['⚔️', '️🛡️'],
-            'names': ['Sword', 'Shield'],
-            'starters': ['Grookey', 'Scorbunny', 'Sobble']
-        }
+        # Gen 8 not supported by API :(
+        # 8: {
+        #     'icons': ['⚔️', '️🛡️'],
+        #     'names': ['Sword', 'Shield'],
+        #     'starters': ['Grookey', 'Scorbunny', 'Sobble']
+        # }
     }
     return starters
 

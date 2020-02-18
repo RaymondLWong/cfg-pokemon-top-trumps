@@ -118,9 +118,7 @@ class Pokemon(PrettyClass):
         sorted_props.update({'height': self.height})
         sorted_props.update({'weight': self.weight})
         all_props = f'\n{self.sprite}\n' if self.sprite else ''
-        all_props += format_as_table(sorted_props)
-        all_props += self.stats.__str__()
-        return all_props
+        return all_props + format_as_table(sorted_props) + self.stats.__str__()
 
     def __repr__(self):
         return self.str_repr
