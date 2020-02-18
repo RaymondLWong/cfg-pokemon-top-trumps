@@ -135,20 +135,7 @@ class Game:
             if user_lost or opponent_lost:
                 turn_player = self.change_turns(turn_player)
 
-            # if there's one more card in the neutral deck,
-            # it will just get added to the winning person's deck,
-            # so start calculating winner
-            if len(self.deck) == 1:
-                pokemon = create_pokemon(self.deck[0])
-                announcement = 'There is only one card left in the neutral deck ({}). '\
-                               'Determining winner...'.format(blue(pokemon.name))
-                print(announcement)
-
-                # add last card to current player's turn
-                if turn_player == Turn.user:
-                    self.player_cards.append(pokemon)
-                else:
-                    self.opponent_cards.append(pokemon)
+            if self.give_final_card(turn_player):
                 break
             else:
                 previous_battle_result = self.commence_battle(turn_player)
@@ -160,15 +147,20 @@ class Game:
         self.generation = self.prompt_user_for_generation()
         self.create_deck()
         card_limit = self.prompt_max_cards_win_condition(self.generation)
+        self.chop_deck(card_limit)
         turn_player = self.choose_turn_player(CoinToss.heads)
         self.announce_start()
         previous_battle_result = None
-        while self.battle_count < card_limit:
+        while len(self.deck) > 0 and round(self.battle_count * 2) < card_limit:
             user_lost = turn_player == Turn.user and previous_battle_result == BattleResult.lose
             opponent_lost = turn_player == Turn.opponent and previous_battle_result == BattleResult.win
-            if user_lost or opponent_lost:
-                turn_player = self.change_turns(turn_player)
-            previous_battle_result = self.commence_battle(turn_player)
+
+            if self.give_final_card(turn_player):
+                break
+            else:
+                if user_lost or opponent_lost:
+                    turn_player = self.change_turns(turn_player)
+                previous_battle_result = self.commence_battle(turn_player)
             print_separator()
         self.announce_match_winner_for_deplete()
         self.show_final_score()
@@ -180,6 +172,24 @@ class Game:
         if len(self.deck) == 0:
             if len(self.player_cards) == 0 or len(self.opponent_cards) == 0:
                 return True
+        return False
+
+    def give_final_card(self, turn_player: Turn) -> bool:
+        # if there's one more card in the neutral deck,
+        # it will just get added to the winning person's deck,
+        # so start calculating winner
+        if len(self.deck) == 1:
+            pokemon = create_pokemon(self.deck[0])
+            announcement = 'There is only one card left in the neutral deck ({}). ' \
+                           'Determining winner...'.format(blue(pokemon.name))
+            print(announcement)
+
+            # add last card to current player's turn
+            if turn_player == Turn.user:
+                self.player_cards.append(pokemon)
+            else:
+                self.opponent_cards.append(pokemon)
+            return True
         return False
 
     def chop_deck(self, new_size: int):
@@ -297,7 +307,8 @@ class Game:
     def commence_battle(
             self,
             turn_player: Turn = None,
-            first_battle: bool = None
+            first_battle: bool = None,
+            use_accumulated_cards: bool = False
     ) -> BattleResult:
         if first_battle or not turn_player:
             turn_player = self.choose_turn_player(CoinToss.heads)
