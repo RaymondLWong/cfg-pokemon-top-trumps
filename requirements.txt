@@ -1,0 +1,6 @@
+pokebase
+questionary
+websockets
+colorama
+Pillow
+requests
