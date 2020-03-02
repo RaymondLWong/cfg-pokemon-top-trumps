@@ -1,4 +1,5 @@
 import random
+import sys
 from decimal import Decimal
 from typing import List, TypeVar, Callable
 
@@ -73,6 +74,7 @@ class Game:
         ('highlighted', 'fg:cyan'),
         ('pointer', 'bold')
     ])
+    kbi_msg = 'Exiting the game...'
 
     game_mode: GameMode
 
@@ -111,7 +113,7 @@ class Game:
             ],
             style=self.custom_styling,
             qmark='🕹'
-        ).ask()
+        ).ask(kbi_msg=self.kbi_msg)
 
     def start_game(
             self,
@@ -207,7 +209,7 @@ class Game:
             style=self.custom_styling,
             qmark='🃏',
             validate=lambda user_input: validate_card_limit(user_input, 2, max_cards)
-        ).ask()
+        ).ask(kbi_msg=self.kbi_msg)
         return int(user_choice) or max_cards
 
     def prompt_max_cards_win_condition(self, gen: int) -> int or None:
@@ -318,7 +320,7 @@ class Game:
             message=f'Battle again? ({stats})',
             style=self.custom_styling,
             qmark=random.choice(['👊', '🤜', '🤛'])
-        ).ask()
+        ).ask(kbi_msg=self.kbi_msg)
 
     def get_win_rate(self) -> str:
         win_rate = 100 * (self.wins / self.battle_count) if self.battle_count > 0 else 0
@@ -387,7 +389,7 @@ class Game:
             choices=choices,
             style=self.custom_styling,
             qmark='💪'
-        ).ask()
+        ).ask(kbi_msg=self.kbi_msg)
 
     def choose_stat_for_opponent(self, opponent_pokemon: Pokemon) -> Entry:
         available_stats = opponent_pokemon.get_available_battle_stats(True)
@@ -477,7 +479,13 @@ class Game:
             choices=get_available_generations(),
             style=self.custom_styling,
             qmark='⭐'
-        ).ask()
+        ).ask(kbi_msg=self.kbi_msg)
 
 
-new_game = Game()
+new_game = None
+try:
+    new_game = Game()
+except KeyboardInterrupt:
+    if new_game.battle_count > 0:
+        new_game.announce_match_winner()
+    sys.exit(0)
