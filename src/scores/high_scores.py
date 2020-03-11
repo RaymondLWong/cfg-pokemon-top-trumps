@@ -1,5 +1,7 @@
 from enum import Enum
-from typing import List
+from typing import List, TypedDict
+
+from src.gameplay.utils import blue, purple
 
 
 class StrEnum(str, Enum):
@@ -43,6 +45,24 @@ class Scoreboard:
         self.scores = self.scores[:self.max_entries]
         return score.player_name in [entry.player_name for entry in self.scores]
 
+    def show(self):
+        print(purple('=' * 40))
+        print(blue('{:^40}'.format(f'{self.name} Scoreboard')))
+        print(purple('=' * 40))
+        print(blue('{:^10} {:<20} {:^5}'.format('position', 'player', 'score')))
+        for position, entry in enumerate(self.scores, start=1):
+            print('{:^10} {:<20} {:>5}'.format(position, entry.player_name, entry.score))
+
+
+class Scoreboards(TypedDict):
+    single_match: Scoreboard
+    traditional: Scoreboard
+    deplete: Scoreboard
+
+    single_match_pvp: Scoreboard
+    traditional_pvp: Scoreboard
+    deplete_pvp: Scoreboard
+
 
 def get_scoreboard_name(scoreboard_type: ScoreboardType, pvp: bool) -> str:
-    return '{}{}'.format(scoreboard_type.value, '_pvp' if pvp else '')
+    return '{}{}'.format(scoreboard_type, '_pvp' if pvp else '')

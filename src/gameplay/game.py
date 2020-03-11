@@ -1,9 +1,10 @@
 import random
+import sys
 from decimal import Decimal
 from typing import List, TypeVar, Callable
 
 import questionary
-from enum import Enum
+from enum import Enum, auto
 from questionary import Choice
 
 from src.gameplay.card import Entry, Pokemon, create_pokemon
@@ -12,7 +13,7 @@ from src.gameplay.generations import get_available_generations, get_static_pokem
 from src.gameplay.utils import create_choice, green, red, yellow, blue, purple
 from prompt_toolkit.styles import Style
 
-from src.scores.high_scores import ScoreboardType, Score
+from src.scores.high_scores import ScoreboardType, Score, Scoreboards
 from src.scores.persistent_storage import Store
 
 T = TypeVar('T')
@@ -42,6 +43,12 @@ class GameMode(Enum):
     traditional = 2,  # winner keeps cards, draws ensue extra round, continues until s player has all cards
     deplete = 3,  # stop when card limit reached
     vs_player = 4
+
+
+class MainMenu(Enum):
+    play = auto(),
+    high_scores = auto(),
+    settings = auto()
 
 
 def compare(a: T, b: T) -> BattleResult:
@@ -78,10 +85,9 @@ class Game:
     ])
     kbi_msg = 'Exiting the game...'
 
-    high_scores = Store()
+    store = Store()
     game_mode: GameMode
 
-    player_name: str
     generation: int
     card_limit: int
 
@@ -95,17 +101,32 @@ class Game:
     opponent_cards: List[Pokemon] = []
 
     def __init__(self):
-        self.prompt_user_for_name()
-        self.game_mode = self.prompt_game_mode()
+        option = self.show_main_menu()
 
-        if self.game_mode == GameMode.single_match:
-            self.start_single_match()
-        elif self.game_mode == GameMode.traditional:
-            self.start_custom_game(self.traditional_win_condition)
-        elif self.game_mode == GameMode.deplete:
-            self.start_custom_game(self.deplete_win_condition)
+        if option is MainMenu.play:
+            self.game_mode = self.prompt_game_mode()
+            self.handle_game_modes()
+        elif option is MainMenu.high_scores:
+            self.show_high_scores()
         else:
-            self.start_versus_player()
+            # only one setting atm, so jump straight there
+            if self.store.player_name_set():
+                self.prompt_user_for_rename()
+            else:
+                self.prompt_user_for_name()
+        sys.exit(0)
+
+    def show_main_menu(self):
+        player_name = self.store.settings['player_name'] if self.store.player_name_set() else 'trainer'
+        return questionary.select(
+            message=f'Welcome {player_name}!',
+            choices=[
+                Choice(title='play', value=MainMenu.play),
+                Choice(title='high scores', value=MainMenu.high_scores),
+                Choice(title='settings', value=MainMenu.settings),
+            ],
+            style=self.custom_styling,
+        ).ask(kbi_msg=self.kbi_msg)
 
     def prompt_game_mode(self) -> GameMode:
         return questionary.select(
@@ -119,6 +140,16 @@ class Game:
             style=self.custom_styling,
             qmark='🕹'
         ).ask(kbi_msg=self.kbi_msg)
+
+    def handle_game_modes(self):
+        if self.game_mode is GameMode.single_match:
+            self.start_single_match()
+        elif self.game_mode is GameMode.traditional:
+            self.start_custom_game(self.traditional_win_condition)
+        elif self.game_mode is GameMode.deplete:
+            self.start_custom_game(self.deplete_win_condition)
+        else:
+            self.start_versus_player()
 
     def start_game(
             self,
@@ -142,7 +173,7 @@ class Game:
             print_separator()
             user_wants_to_battle = self.prompt_continue()
         self.announce_match_winner()
-        score = Score(self.player_name, self.wins)
+        score = Score(self.store.settings['player_name'], self.wins)
         self.submit_score(ScoreboardType.single_match, score)
 
     def start_custom_game(self, game_should_continue: Callable[[], bool]):
@@ -489,18 +520,40 @@ class Game:
             qmark='⭐'
         ).ask(kbi_msg=self.kbi_msg)
 
+    def show_high_scores(self):
+        available_scoreboards = list(self.store.high_scores.keys())
+        scoreboard_name = questionary.select(
+            message='Choose a score board to view:',
+            choices=available_scoreboards,
+            style=self.custom_styling,
+            qmark='✦✧🟄'
+        ).ask(kbi_msg=self.kbi_msg)
+        scoreboard = self.store.get_scoreboard(
+            scoreboard_name.replace('_pvp', ''),
+            scoreboard_name.endswith('_pvp')
+        )
+        scoreboard.show()
+
     def prompt_user_for_name(self):
         default_names = ['Pikachu', 'Eevee', 'Mew', 'Ash', 'Satoshi']
-        self.player_name = questionary.text(
-            message='Choose a name for high score entries and PvP:',
+        player_name = questionary.text(
+            message='Set a name for high score entries and PvP:',
             default=random.choice(default_names)
         ).ask()
+        self.store.set_player_name(player_name)
+
+    def prompt_user_for_rename(self):
+        player_name = questionary.text(
+            message='Set a new name for high score entries and PvP:',
+            default=self.store.settings.player_name
+        ).ask()
+        self.store.set_player_name(player_name)
 
     def submit_score(self, scoreboard: ScoreboardType, score: Score):
-        new_high_score = self.high_scores.submit_score(scoreboard, False, score)
+        new_high_score = self.store.submit_score(scoreboard, False, score)
         if new_high_score:
             announcement = 'Congratulations {} for reaching a new high score of {}!'.format(
-                blue(self.player_name),
+                blue(self.store.settings['player_name']),
                 blue(score.score)
             )
             print(announcement)

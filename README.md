@@ -1,5 +1,5 @@
 # Pokemon Top Trumps
-To start playing, run: `python3 start.py`
+To start playing, install the dependencies and run `start.py`: `pip3 install -r requirements.txt && python3 start.py`
 
 ## Games Modes
 - [Single Match](#single-match)
