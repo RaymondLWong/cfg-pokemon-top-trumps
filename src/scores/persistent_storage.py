@@ -12,8 +12,8 @@ ScoreboardStore = Union[Scoreboards, shelve.DbfilenameShelf]
 
 
 class Store:
-    settings: SettingsStore = shelve.open('settings', writeback=True)
-    high_scores: ScoreboardStore = shelve.open('scoreboards', writeback=True)
+    settings: SettingsStore = shelve.open('data/settings', writeback=True)
+    high_scores: ScoreboardStore = shelve.open('data/scoreboards', writeback=True)
 
     def __init__(self):
         if 'player_name' not in self.settings:
