@@ -1,5 +1,4 @@
 import random
-import sys
 from decimal import Decimal
 from typing import List, TypeVar, Callable
 
@@ -7,11 +6,14 @@ import questionary
 from enum import Enum
 from questionary import Choice
 
-from src.gameplay.Card import Entry, Pokemon, create_pokemon
-from src.gameplay.Generations import get_available_generations, get_static_pokemon_count_for_generation, \
+from src.gameplay.card import Entry, Pokemon, create_pokemon
+from src.gameplay.generations import get_available_generations, get_static_pokemon_count_for_generation, \
     get_poke_id
-from src.gameplay.Utils import create_choice, green, red, yellow, blue, purple
+from src.gameplay.utils import create_choice, green, red, yellow, blue, purple
 from prompt_toolkit.styles import Style
+
+from src.scores.high_scores import ScoreboardType, Score
+from src.scores.persistent_storage import Store
 
 T = TypeVar('T')
 
@@ -76,8 +78,10 @@ class Game:
     ])
     kbi_msg = 'Exiting the game...'
 
+    high_scores = Store()
     game_mode: GameMode
 
+    player_name: str
     generation: int
     card_limit: int
 
@@ -91,6 +95,7 @@ class Game:
     opponent_cards: List[Pokemon] = []
 
     def __init__(self):
+        self.prompt_user_for_name()
         self.game_mode = self.prompt_game_mode()
 
         if self.game_mode == GameMode.single_match:
@@ -137,6 +142,8 @@ class Game:
             print_separator()
             user_wants_to_battle = self.prompt_continue()
         self.announce_match_winner()
+        score = Score(self.player_name, self.wins)
+        self.submit_score(ScoreboardType.single_match, score)
 
     def start_custom_game(self, game_should_continue: Callable[[], bool]):
         self.start_game(True)
@@ -463,7 +470,8 @@ class Game:
             if self.game_mode is GameMode.traditional:
                 print(f'You managed to obtain all {player_card_count} cards!')
             elif self.game_mode is GameMode.deplete:
-                print(f'You accumulated {player_card_count} cards and your opponent amassed {opponent_card_count} cards.')
+                print(f'You accumulated {player_card_count} cards '
+                      f'and your opponent amassed {opponent_card_count} cards.')
 
             if final_result == BattleResult.win:
                 print('Congratulations, you {} the match! ✌️'.format(green('WIN')))
@@ -481,11 +489,18 @@ class Game:
             qmark='⭐'
         ).ask(kbi_msg=self.kbi_msg)
 
+    def prompt_user_for_name(self):
+        default_names = ['Pikachu', 'Eevee', 'Mew', 'Ash', 'Satoshi']
+        self.player_name = questionary.text(
+            message='Choose a name for high score entries and PvP:',
+            default=random.choice(default_names)
+        ).ask()
 
-new_game = None
-try:
-    new_game = Game()
-except KeyboardInterrupt:
-    if new_game.battle_count > 0:
-        new_game.announce_match_winner()
-    sys.exit(0)
+    def submit_score(self, scoreboard: ScoreboardType, score: Score):
+        new_high_score = self.high_scores.submit_score(scoreboard, False, score)
+        if new_high_score:
+            announcement = 'Congratulations {} for reaching a new high score of {}!'.format(
+                blue(self.player_name),
+                blue(score.score)
+            )
+            print(announcement)

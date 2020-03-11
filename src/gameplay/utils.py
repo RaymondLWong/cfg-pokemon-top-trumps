@@ -1,6 +1,6 @@
 from colorama import Fore, Style
 from questionary import Choice
-from src.gameplay.Card import Entry
+from src.gameplay.card import Entry
 import random
 
 str_int = str or int

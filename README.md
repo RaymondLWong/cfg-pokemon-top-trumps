@@ -1,5 +1,5 @@
 # Pokemon Top Trumps
-To start playing, run: `python3 Game.py`
+To start playing, run: `python3 start.py`
 
 ## Games Modes
 - [Single Match](#single-match)
