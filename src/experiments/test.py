@@ -1,4 +1,4 @@
-from timeout_test import mytest
+from src.experiments.timeout_test import mytest
 
 if __name__ == '__main__':
     mytest('starting')

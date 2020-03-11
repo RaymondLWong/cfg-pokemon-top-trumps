@@ -1,6 +1,6 @@
 from random import randrange
 from typing import Mapping, List
-from Card import Pokemon, create_pokemon
+from src.gameplay.Card import Pokemon, create_pokemon
 
 
 def get_static_generation_counts() -> Mapping[int, int]:

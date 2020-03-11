@@ -5,7 +5,7 @@ from copy import copy
 import requests
 import pprint as pp
 import pokebase as pb
-from image_to_ascii_art import image_to_ascii_art
+from src.gameplay.image_to_ascii_art import image_to_ascii_art
 from colorama import Fore, Style
 from typing import Generic, TypeVar, List, Union
 

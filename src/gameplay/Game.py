@@ -7,10 +7,10 @@ import questionary
 from enum import Enum
 from questionary import Choice
 
-from Card import Entry, Pokemon, create_pokemon
-from Generations import get_available_generations, get_static_pokemon_count_for_generation, \
+from src.gameplay.Card import Entry, Pokemon, create_pokemon
+from src.gameplay.Generations import get_available_generations, get_static_pokemon_count_for_generation, \
     get_poke_id
-from Utils import create_choice, green, red, yellow, blue, purple
+from src.gameplay.Utils import create_choice, green, red, yellow, blue, purple
 from prompt_toolkit.styles import Style
 
 T = TypeVar('T')
