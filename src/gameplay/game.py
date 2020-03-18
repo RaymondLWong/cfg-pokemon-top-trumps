@@ -173,8 +173,6 @@ class Game:
             print_separator()
             user_wants_to_battle = self.prompt_continue()
         self.announce_match_winner()
-        score = Score(self.store.settings['player_name'], self.wins)
-        self.submit_score(ScoreboardType.single_match, score)
 
     def start_custom_game(self, game_should_continue: Callable[[], bool]):
         self.start_game(True)
@@ -511,6 +509,8 @@ class Game:
             else:
                 print('The match ends in a {}!'.format(yellow('DRAW')))
         self.show_final_score()
+        score = Score(self.store.settings['player_name'], self.wins)
+        self.submit_score(ScoreboardType.single_match, score)
 
     def prompt_user_for_generation(self) -> int:
         return questionary.select(

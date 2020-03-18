@@ -39,6 +39,5 @@ Python's `shelve` library is used for persistent storage of score boards.
 Uses `pokebase`, a wrapper for `PokeAPI` backend.
 
 ## TODO
-- [ ] persistent high scores
 - [ ] import / export score boards
 - [ ] network games (PvP)
